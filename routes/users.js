@@ -95,6 +95,7 @@ router.post('/signin', (req, res) => {
 
 // --- ROUTE LOGOUT --- ///
 // Permet la déconnection de l'utilisateur
+
 router.get('/logout', (req, res) => {
 
   try {
