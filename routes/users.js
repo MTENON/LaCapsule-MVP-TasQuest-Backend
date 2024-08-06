@@ -17,10 +17,10 @@ router.get('/', (req, res) => {
 });
 
 
-// --- ROUTE SIGNIN --- ///
+// --- ROUTE SIGNUP --- ///
 // Permet la création de compte d'un utilisateur
 
-router.post('/signin', (req, res) => {
+router.post('/signup', (req, res) => {
 
   if (!checkBody(req.body, ['username', 'password', 'email'])) {
     res.status(412);
@@ -62,10 +62,10 @@ router.post('/signin', (req, res) => {
     })
 })
 
-// --- ROUTE SIGNIN --- ///
+// --- ROUTE SIGN IN --- ///
 // Permet l'authentification d'un utilisateur déjà enregistré
 
-router.post('/signup', (req, res) => {
+router.post('/signin', (req, res) => {
 
   if (checkBody(req.body, ['username', 'password']) || checkBody(req.body, ['email', 'password'])) {
 
@@ -78,7 +78,7 @@ router.post('/signup', (req, res) => {
   User.findOne({
     $or:
       [{ username: req.body.username },
-      { email: req.body.email }]
+      { email: req.body.username }]
   })
     .then((data) => {
       if (!data) {
@@ -92,5 +92,17 @@ router.post('/signup', (req, res) => {
       }
     })
 })
+
+// --- ROUTE LOGOUT --- ///
+// Permet la déconnection de l'utilisateur
+router.get('/logout', (req, res) => {
+
+  try {
+    res.json({ result: true, data: 'deconnection' });
+  } catch (error) {
+    alert(error.message);
+  }
+})
+
 
 module.exports = router;
