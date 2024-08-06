@@ -5,6 +5,35 @@ const Task = require("../models/tasks");
 const User = require("../models/users");
 const { checkBody } = require("../functions/checkbody");
 
+//  Route get pour l'affichage des habitudes
+router.get("/", (req, res) => {
+  try {
+    User.findOne({ token: req.body.token }).then((user) => {
+      if (!user) {
+        res.json({ result: false, error: "Token invalide" });
+        return;
+      }
+      const creator = user._id;
+      Task.find({ creator })
+        .select("-creator -_id -repetition._id -__v")
+        .then((e) => {
+          if (e) {
+            const tab = e.map((data) => {
+              res.json({
+                result: true,
+                habits: data,
+              });
+            });
+          } else {
+            res.json({ result: false, error: "No data" });
+          }
+        });
+    });
+  } catch (error) {
+    res.json({ result: false, error: error.message });
+  }
+});
+
 //  Route post pour la creation d'une habitude
 router.post("/create", (req, res) => {
   if (!checkBody(req.body, ["name", "number", "label"])) {
@@ -26,7 +55,7 @@ router.post("/create", (req, res) => {
   try {
     User.findOne({ token }).then((user) => {
       if (!user) {
-        res.json({ result: false, error: "User not found" });
+        res.json({ result: false, error: "Token invalide" });
         return;
       }
       const creator = user._id;
@@ -56,10 +85,7 @@ router.post("/create", (req, res) => {
                   description: data.description,
                   tags: data.tags,
                   dificulty: data.dificulty,
-                  repetition: {
-                    number: data.repetition.number,
-                    label: data.repetition.label,
-                  },
+                  repetition: data.repetition,
                   isFavorite: data.isFavorite,
                   type: data.type,
                 },
@@ -117,32 +143,21 @@ router.post("/modify", (req, res) => {
           },
           isFavorite,
         }
-      ).then(() => {
-        Task.findOne({
-          creator,
-          name: { $regex: new RegExp(newName, "i") },
-        }).then((data) => {
-          res.json({
-            result: true,
-            habits: {
-              creator: data.creator,
-              name: data.name,
-              description: data.description,
-              tags: data.tags,
-              dificulty: data.dificulty,
-              repetition: {
-                number: data.repetition.number,
-                label: data.repetition.label,
-              },
-              isFavorite: data.isFavorite,
-              type: data.type,
-            },
+      )
+        .select("-creator -_id -repetition._id -__v")
+        .then(() => {
+          Task.findOne({
+            creator,
+            name: { $regex: new RegExp(newName, "i") },
+          }).then((data) => {
+            res.json({
+              result: true,
+              habits: data,
+            });
           });
         });
-      });
     });
   } catch (error) {
-    // alert(error.message);
     res.json({ result: false, error: error.message });
   }
 });
@@ -176,15 +191,11 @@ router.post("/pause", (req, res) => {
           res.json({
             result: true,
             habits: {
-              creator: data.creator,
               name: data.name,
               description: data.description,
               tags: data.tags,
               dificulty: data.dificulty,
-              repetition: {
-                number: data.repetition.number,
-                label: data.repetition.label,
-              },
+              repetition: data.repetition,
               isFavorite: data.isFavorite,
               onPauseSince: data.onPauseSince,
               endDate: data.endDate,
@@ -196,7 +207,6 @@ router.post("/pause", (req, res) => {
       });
     });
   } catch (error) {
-    // alert(error.message);
     res.json({ result: false, error: error.message });
   }
 });
