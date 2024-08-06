@@ -21,7 +21,6 @@ router.post("/create", (req, res) => {
     number,
     label,
     isFavorite,
-    urgent,
   } = req.body;
 
   try {
@@ -45,11 +44,24 @@ router.post("/create", (req, res) => {
                 label,
               },
               isFavorite,
-              urgent,
             });
 
             newTask.save().then((data) => {
-              res.json({ result: true, data });
+              res.json({
+                result: true,
+                habits: {
+                  creator: data.creator,
+                  name: data.name,
+                  description: data.description,
+                  tags: data.tags,
+                  dificulty: data.dificulty,
+                  repetition: {
+                    number: data.repetition.number,
+                    label: data.repetition.label,
+                  },
+                  isFavorite: data.isFavorite,
+                },
+              });
             });
           } else {
             res.json({
@@ -61,7 +73,8 @@ router.post("/create", (req, res) => {
       );
     });
   } catch (error) {
-    alert(error.message);
+    // alert(error.message);
+    res.json({ result: false, error: error.message });
   }
 });
 
@@ -87,24 +100,43 @@ router.post("/modify", (req, res) => {
   try {
     User.findOne({ token }).then((user) => {
       if (!user) {
-        res.json({ result: false, error: "User not found" });
+        res.json({ result: false, error: "Token invalide" });
         return;
       }
       const creator = user._id;
       Task.updateOne(
-        { creator, name: {  $regex: new RegExp(name, "i") } },
+        { creator, name: { $regex: new RegExp(name, "i") } },
         {
           name: newName,
           description,
           tags,
           dificulty,
-          number,
-          label,
+          repetition: {
+            number,
+            label,
+          },
           isFavorite,
         }
       ).then(() => {
-        Task.find().then((data) => {
-          res.json({ result: true, data });
+        Task.findOne({
+          creator,
+          name: { $regex: new RegExp(newName, "i") },
+        }).then((data) => {
+          res.json({
+            result: true,
+            habits: {
+              creator: data.creator,
+              name: data.name,
+              description: data.description,
+              tags: data.tags,
+              dificulty: data.dificulty,
+              repetition: {
+                number: data.repetition.number,
+                label: data.repetition.label,
+              },
+              isFavorite: data.isFavorite,
+            },
+          });
         });
       });
     });
