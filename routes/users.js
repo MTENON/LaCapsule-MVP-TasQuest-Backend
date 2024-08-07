@@ -210,6 +210,8 @@ router.post('/signin', (req, res) => {
     return;
   };
 
+
+
   User.findOne({
     $or:
       [{ username: req.body.username },
@@ -219,11 +221,28 @@ router.post('/signin', (req, res) => {
       if (!data) {
         res.json({ result: false, data: 'No user in database' })
         return;
-      } else if (data && bcrypt.compareSync(req.body.password, data.password)) {
-        const result = { username: data.username, token: data.token }
-        res.json({ result: true, data: result })
       } else if (data && !bcrypt.compareSync(req.body.password, data.password)) {
         res.json({ result: false, error: 'wrong password' })
+      } else if (data && bcrypt.compareSync(req.body.password, data.password)) {
+
+        User.updateOne({
+          $or:
+            [{ username: req.body.username },
+            { email: req.body.username }]
+        },
+          { token: uid2(32) })
+          .then(() => {
+            User.findOne({
+              $or:
+                [{ username: req.body.username },
+                { email: req.body.username }]
+            })
+              .then((data) => {
+                const result = { username: data.username, token: data.token }
+                res.json({ result: true, data: result })
+              })
+          })
+
       }
     });
 })
