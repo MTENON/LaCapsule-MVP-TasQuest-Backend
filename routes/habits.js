@@ -6,29 +6,25 @@ const User = require("../models/users");
 const { checkBody } = require("../functions/checkbody");
 
 router.post("/test", (req, res) => {
-  res.json({body: req.body})
-})
+  res.json({ body: req.body });
+});
 
 //  Route GET pour l'affichage des habitudes
 router.get("/", (req, res) => {
   try {
-    User.findOne({ token: req.body.token }).then((user) => {
-      if (!user) {
-        res.json({ result: false, error: "Token invalide" });
-        return;
-      }
-      Task.find({ creator: user._id }).then((e) => {
-        if (e) {
-          const tab = e.map((data) => {
-            res.json({
-              result: true,
-              habits: data,
-            });
+    Task.find({ creator: req.body._id, type: "Habits" }).then((data) => {
+      if (data) {
+        console.log("true =>", req.body._id);
+        const tab = data.map((e) => {
+          res.json({
+            result: true,
+            habits: e,
           });
-        } else {
-          res.json({ result: false, error: "No data" });
-        }
-      });
+        });
+      } else {
+        console.log("false =>", req.body._id);
+        res.json({ result: false, error: "No data" });
+      }
     });
   } catch (error) {
     res.json({ result: false, error: error.message });
@@ -51,43 +47,38 @@ router.post("/create", (req, res) => {
     number,
     label,
     isFavorite,
+    _id,
   } = req.body;
 
   try {
-    User.findOne({ token }).then((user) => {
-      if (!user) {
-        res.json({ result: false, error: "Token invalide" });
-        return;
-      }
-      const creator = user._id;
-      Task.findOne({ creator, name: { $regex: new RegExp(name, "i") } }).then(
-        (data) => {
-          if (!data) {
-            const newTask = new Task({
-              creator,
-              type: "Habits",
-              name,
-              description,
-              tags,
-              difficulty,
-              repetition: {
-                number,
-                label,
-              },
-              isFavorite,
-            });
+    Task.findOne({
+      creator: req.body._id,
+      name: { $regex: new RegExp(name, "i") },
+    }).then((data) => {
+      if (!data) {
+        const newTask = new Task({
+          creator: req.body._id,
+          type: "Habits",
+          name,
+          description,
+          tags,
+          difficulty,
+          repetition: {
+            number,
+            label,
+          },
+          isFavorite,
+        });
 
-            newTask.save().then(() => {
-              res.json({ result: true });
-            });
-          } else {
-            res.json({
-              result: false,
-              errorMsg: "Cette habitude existe déja.",
-            });
-          }
-        }
-      );
+        newTask.save().then((data) => {
+          res.json({ result: true, data });
+        });
+      } else {
+        res.json({
+          result: false,
+          errorMsg: "Cette habitude existe déja.",
+        });
+      }
     });
   } catch (error) {
     res.json({ result: false, error: error.message });

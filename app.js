@@ -29,12 +29,13 @@ app.use("/habits", (req, res, next) => {
   // const token = req.body.token;
   User.findOne({ token: req.body.token }).then((user) => {
     if (user === null) {
+      res.status(401);
       res.json({ result: false, error: "Token invalide" });
       return;
     }
     req.body = { ...req.body, _id: user._id };
+    next();
   });
-  next();
 });
 
 app.use("/tasks", (req, res, next) => {
@@ -45,8 +46,8 @@ app.use("/tasks", (req, res, next) => {
       return;
     }
     req.body = { ...req.body, _id: user._id };
+    next();
   });
-  next();
 });
 
 app.use("/", indexRouter);
