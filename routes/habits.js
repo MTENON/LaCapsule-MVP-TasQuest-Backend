@@ -5,7 +5,9 @@ const Task = require("../models/tasks");
 const User = require("../models/users");
 const { checkBody } = require("../functions/checkbody");
 
-
+router.post("/test", (req, res) => {
+  res.json({body: req.body})
+})
 
 //  Route GET pour l'affichage des habitudes
 router.get("/", (req, res) => {

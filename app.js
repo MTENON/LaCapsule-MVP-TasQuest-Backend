@@ -28,10 +28,11 @@ const User = require("./models/users");
 app.use("/habits", (req, res, next) => {
   // const token = req.body.token;
   User.findOne({ token: req.body.token }).then((user) => {
-    if (!user) {
+    if (user === null) {
       res.json({ result: false, error: "Token invalide" });
       return;
     }
+    req.body = { ...req.body, _id: user._id };
   });
   next();
 });
@@ -39,10 +40,11 @@ app.use("/habits", (req, res, next) => {
 app.use("/tasks", (req, res, next) => {
   // const token = req.body.token;
   User.findOne({ token: req.body.token }).then((user) => {
-    if (!user) {
+    if (user === null) {
       res.json({ result: false, error: "Token invalide" });
       return;
     }
+    req.body = { ...req.body, _id: user._id };
   });
   next();
 });
