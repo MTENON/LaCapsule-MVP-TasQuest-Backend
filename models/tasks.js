@@ -6,25 +6,25 @@ const repetitionSchema = mongoose.Schema({
 });
 
 const insideToDosSchema = mongoose.Schema({
-  toDo: [String],
+  toDo: String,
 });
 
 const taskSchema = mongoose.Schema({
   creator: { type: mongoose.Schema.Types.ObjectId, ref: "users" },
+  type: String,
   name: { type: String, required: true, trim: true },
   description: String,
   createdAt: { type: Date, default: new Date(), required: true },
+  updatedAt: { type: Date, default: null },
   tags: [{ type: mongoose.Schema.Types.ObjectId, ref: "tags" }],
-  onPauseSince: Date, // Starting date of the pause
-  onPauseTime: Date, // Length of the pause ?
-  endDate: Date, // Ending date planned for the pause
-  pauseDesc: String, // Reason for the pause
-  type: String,
-  dificulty: { type: Number, min: 1, max: 5, default: 1 },
+  difficulty: { type: Number, min: 1, max: 5, default: 1 },
   repetition: repetitionSchema,
-  insideToDos: insideToDosSchema,
   isFavorite: { type: Boolean, default: false },
-  urgent: { type: Boolean, default: false },
+  onPauseSince: { type: Date, default: null }, // Starting date of the pause
+  endDate: { type: Date, default: null }, // Ending date planned for the pause
+  pauseDesc: { type: String, default: null }, // Reason for the pause
+  insideToDos: [insideToDosSchema],
+  isUrgent: { type: Boolean, default: false },
 });
 
 const Task = mongoose.model("tasks", taskSchema);
