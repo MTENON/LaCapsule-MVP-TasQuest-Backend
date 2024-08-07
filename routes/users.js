@@ -112,9 +112,88 @@ router.post('/signup', async (req, res) => {
     quest: null
   })
 
+  /*
+{
+  "newCharacterData": {
+    "name": "Angelique",
+    "class": {
+      "_id": "66b331709762ea8f0f8c622a",
+      "name": "Mage",
+      "image": "https://via.placeholder.com/300",
+      "icon": "https://via.placeholder.com/150",
+      "skills": [
+        "66b32fe79762ea8f0f8c6220",
+        "66b32fe79762ea8f0f8c6221",
+        "66b32fe79762ea8f0f8c6222"
+      ]
+    },
+    "user": "66b3523749b5a6f78c6ad373",
+    "caracteristics": {
+      "level": 1,
+      "HP": 10,
+      "XP": 0,
+      "caracs": [
+        {
+          "carac": "66b3349a9762ea8f0f8c62a9",
+          "level": 0,
+          "_id": "66b3523749b5a6f78c6ad379"
+        },
+        {
+          "carac": "66b3349a9762ea8f0f8c62aa",
+          "level": 0,
+          "_id": "66b3523749b5a6f78c6ad37a"
+        },
+        {
+          "carac": "66b3349a9762ea8f0f8c62ab",
+          "level": 0,
+          "_id": "66b3523749b5a6f78c6ad37b"
+        },
+        {
+          "carac": "66b3349a9762ea8f0f8c62ac",
+          "level": 0,
+          "_id": "66b3523749b5a6f78c6ad37c"
+        }
+      ],
+      "_id": "66b3523749b5a6f78c6ad378"
+    },
+    "money": 5,
+    "inventory": [],
+    "equipment": {
+      "necklace": null,
+      "head": null,
+      "hand1": null,
+      "body": null,
+      "hand2": null,
+      "bracelet": null,
+      "feets": null,
+      "ring": null,
+      "_id": "66b3523749b5a6f78c6ad37d"
+    },
+    "quest": null,
+    "_id": "66b3523749b5a6f78c6ad377",
+    "skills": [],
+    "__v": 0
+  }
+}
+  */
+
   const newCharacterData = await newCharacter.save();
 
-  res.json({ newCharacterData })
+  const returnData = {
+    username: newUserData.username,
+    token: newUserData.token,
+    characterId: newCharacterData._id,
+    money: newCharacterData.money,
+    HP: newCharacterData.caracteristics.HP,
+    XP: newCharacterData.caracteristics.XP,
+    caracs: {
+      0: newCharacterData.caracteristics.caracs[0].level,
+      1: newCharacterData.caracteristics.caracs[1].level,
+      2: newCharacterData.caracteristics.caracs[2].level,
+      3: newCharacterData.caracteristics.caracs[3].level
+    }
+  }
+  res.json({ result: true, data: returnData })
 
 })
 
