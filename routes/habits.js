@@ -125,7 +125,7 @@ router.post("/create", (req, res) => {
     return;
   }
   const {
-    key,
+    taskId,
     name,
     description,
     tags,
@@ -150,7 +150,7 @@ router.post("/create", (req, res) => {
   try {
     Task.findOne({
       creator: _id,
-      _id: key,
+      _id: taskId,
     }).then((data) => {
       if (!data) {
         // const startDate = new Date();
@@ -189,15 +189,15 @@ router.post("/create", (req, res) => {
 
 //  Route POST pour la mise en pause d'une habitude
 router.post("/pause", (req, res) => {
-  if (!checkBody(req.body, ["name", "key", "token"])) {
+  if (!checkBody(req.body, ["name", "taskId", "token"])) {
     res.json({ result: false, message: "Champs manquants" });
     return;
   }
-  const { key, _id, PauseEndDate, pauseDesc } = req.body;
+  const { taskId, _id, PauseEndDate, pauseDesc } = req.body;
   try {
     Task.findOne({
       creator: _id,
-      _id: key,
+      _id: taskId,
     }).then((data) => {
       if (data) {
         if (data.onPauseSince) {
@@ -229,16 +229,16 @@ router.post("/pause", (req, res) => {
 
 //  Route POST pour retirer la pause d'une habitude
 router.post("/unpause", (req, res) => {
-  if (!checkBody(req.body, ["name", "key", "token"])) {
+  if (!checkBody(req.body, ["name", "taskId", "token"])) {
     res.json({ result: false, message: "Champs manquants" });
     return;
   }
 
-  const { key, _id } = req.body;
+  const { taskId, _id } = req.body;
   try {
     Task.findOne({
       creator: _id,
-      _id: key,
+      _id: taskId,
     }).then((data) => {
       if (data) {
         if (data.onPauseSince === null) {
@@ -311,12 +311,12 @@ router.get("/unpauseauto", async (req, res) => {
 
 //  Route POST pour la modification d'une habitude
 router.post("/modify", (req, res) => {
-  if (!checkBody(req.body, ["name", "key", "number", "label", "token"])) {
+  if (!checkBody(req.body, ["name", "taskId", "number", "label", "token"])) {
     res.json({ result: false, message: "Champs manquants" });
     return;
   }
   const {
-    key,
+    taskId,
     _id,
     name,
     description,
@@ -332,7 +332,7 @@ router.post("/modify", (req, res) => {
   try {
     Task.findOne({
       creator: _id,
-      _id: key,
+      _id: taskId,
     }).then((data) => {
       if (data) {
         Task.updateOne(
@@ -366,16 +366,16 @@ router.post("/modify", (req, res) => {
 
 //  Route POST pour la validation d'une habitude
 router.post("/isdone", async (req, res) => {
-  if (!checkBody(req.body, ["key"])) {
+  if (!checkBody(req.body, ["taskId"])) {
     res.json({ result: false, message: "Champs manquants" });
     return;
   }
   try {
-    const { key, _id } = req.body;
+    const { taskId, _id } = req.body;
 
     const habit = await Task.findOne({
       creator: _id,
-      _id: key,
+      _id: taskId,
     });
 
     if (!habit) {
@@ -388,7 +388,7 @@ router.post("/isdone", async (req, res) => {
 
     const pointsAndCoins = habit.difficulty;
 
-    await Task.updateOne({ creator: _id, _id: key }, { isDone: newIsDone });
+    await Task.updateOne({ creator: _id, _id: taskId }, { isDone: newIsDone });
 
     const character = await Character.findOne({ user: _id });
 
@@ -418,15 +418,15 @@ router.post("/isdone", async (req, res) => {
 
 //  Route POST pour liker une habitude
 router.post("/like", (req, res) => {
-  if (!checkBody(req.body, ["key"])) {
+  if (!checkBody(req.body, ["taskId"])) {
     res.json({ result: false, message: "Champs manquants" });
     return;
   }
-  const { key, _id } = req.body;
+  const { taskId, _id } = req.body;
   try {
     Task.findOne({
       creator: _id,
-      _id: key,
+      _id: taskId,
     }).then((data) => {
       if (data) {
         Task.updateOne(
