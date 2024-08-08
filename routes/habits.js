@@ -1,12 +1,9 @@
 var express = require("express");
 var router = express.Router();
+var moment = require("moment");
 
 const Task = require("../models/tasks");
 const { checkBody } = require("../functions/checkbody");
-
-router.post("/test", (req, res) => {
-  res.json({ body: req.body });
-});
 
 //  Route GET pour l'affichage des habitudes
 router.get("/", (req, res) => {
@@ -20,9 +17,99 @@ router.get("/", (req, res) => {
           });
         });
       } else {
-        res.json({ result: false, error: "No data" });
+        res.json({ result: false, message: "la data n'existe pas." });
       }
     });
+  } catch (error) {
+    res.json({ result: false, error: error.message });
+  }
+});
+
+//  Route GET test pour la mise a jour des habitudes terminer et réalisé
+router.get("/valid", async (req, res) => {
+  try {
+    const now = moment.utc().toDate();
+
+    // Update tasks
+    const filter = {
+      creator: req.body._id,
+      type: "Habits",
+      isDone: true,
+      endDate: { $lt: now },
+      onPauseSince: null,
+    };
+
+    const tasksToUpdate = await Task.find(filter)
+      .select("startDate endDate repetition")
+      .lean();
+
+    // let modifiedTasks = [];
+
+    for (const task of tasksToUpdate) {
+      const update = {
+        $set: {
+          startDate: task.endDate,
+          endDate: moment(task.endDate)
+            .utc()
+            .add(task.repetition.number, task.repetition.label),
+          isDone: false,
+          updatedAt: now,
+        },
+      };
+
+      const modifiedTask = await Task.findByIdAndUpdate(
+        task._id.toString(),
+        update
+      );
+
+      // modifiedTasks.push(modifiedTask);
+    }
+
+    res.json({ message: "Updated" });
+  } catch (error) {
+    res.json({ result: false, error: error.message });
+  }
+});
+
+router.get("/unvalid", async (req, res) => {
+  try {
+    const now = moment.utc().toDate();
+    
+    // Update tasks
+    const filter = {
+      creator: req.body._id,
+      type: "Habits",
+      isDone: false,
+      endDate: { $lt: now },
+      onPauseSince: null,
+    };
+
+    const tasksToUpdate = await Task.find(filter)
+    .select("startDate endDate repetition")
+    .lean();
+    
+    // let modifiedTasks = [];
+    
+    for (const task of tasksToUpdate) {
+      const update = {
+        $set: {
+          startDate: task.endDate,
+          endDate: moment(task.endDate)
+            .utc()
+            .add(task.repetition.number, task.repetition.label),
+            updatedAt: now,
+          },
+        };
+
+        const modifiedTask = await Task.findByIdAndUpdate(
+          task._id.toString(),
+          update
+        );
+        
+        // modifiedTasks.push(modifiedTask);
+    }
+    
+    res.json({ message: "Updated" });
   } catch (error) {
     res.json({ result: false, error: error.message });
   }
@@ -31,10 +118,9 @@ router.get("/", (req, res) => {
 //  Route post pour la creation d'une habitude
 router.post("/create", (req, res) => {
   if (!checkBody(req.body, ["name", "number", "label"])) {
-    res.json({ result: false, error: "Champs manquants" });
+    res.json({ result: false, message: "Champs manquants" });
     return;
   }
-
   const {
     key,
     name,
@@ -45,19 +131,35 @@ router.post("/create", (req, res) => {
     label,
     isFavorite,
     _id,
+    startDate,
   } = req.body;
+
+  if (
+    label !== "days" &&
+    label !== "weeks" &&
+    label !== "months" &&
+    label !== "years"
+  ) {
+    res.json({ result: false, message: "Le 'label' n'est pas valide" });
+    return;
+  }
 
   try {
     Task.findOne({
-      creator: req.body._id,
+      creator: _id,
       _id: key,
     }).then((data) => {
       if (!data) {
+        // const startDate = new Date();
+        const endDate = moment(startDate).add(number, label);
+        console.log(endDate);
         const newTask = new Task({
           creator: _id,
           type: "Habits",
           name,
           description,
+          startDate,
+          endDate,
           tags,
           difficulty,
           repetition: {
@@ -73,7 +175,7 @@ router.post("/create", (req, res) => {
       } else {
         res.json({
           result: false,
-          errorMsg: "Cette habitude existe déja.",
+          message: "Cette habitude existe déja.",
         });
       }
     });
@@ -85,10 +187,10 @@ router.post("/create", (req, res) => {
 //  Route POST pour la mise en pause d'une habitude
 router.post("/pause", (req, res) => {
   if (!checkBody(req.body, ["name", "key", "token"])) {
-    res.json({ result: false, error: "Champs manquants" });
+    res.json({ result: false, message: "Champs manquants" });
     return;
   }
-  const { key, _id, endDate, pauseDesc } = req.body;
+  const { key, _id, PauseEndDate, pauseDesc } = req.body;
   try {
     Task.findOne({
       creator: _id,
@@ -98,7 +200,7 @@ router.post("/pause", (req, res) => {
         if (data.onPauseSince) {
           res.json({
             result: false,
-            error: "cette habitude est déjà en pause",
+            message: "cette habitude est déjà en pause",
           });
           return;
         }
@@ -107,14 +209,14 @@ router.post("/pause", (req, res) => {
           {
             updatedAt: new Date(),
             onPauseSince: new Date(),
-            endDate,
+            PauseEndDate,
             pauseDesc,
           }
         ).then(() => {
           res.json({ result: true });
         });
       } else {
-        res.json({ result: false, error: "Cette habitude n'existe pas." });
+        res.json({ result: false, message: "Cette habitude n'existe pas." });
       }
     });
   } catch (error) {
@@ -125,7 +227,7 @@ router.post("/pause", (req, res) => {
 //  Route POST pour retirer la pause d'une habitude
 router.post("/unpause", (req, res) => {
   if (!checkBody(req.body, ["name", "key", "token"])) {
-    res.json({ result: false, error: "Champs manquants" });
+    res.json({ result: false, message: "Champs manquants" });
     return;
   }
 
@@ -139,7 +241,7 @@ router.post("/unpause", (req, res) => {
         if (data.onPauseSince === null) {
           res.json({
             result: false,
-            error: "cette habitude n'est pas en pause",
+            message: "cette habitude n'est pas en pause",
           });
           return;
         }
@@ -148,16 +250,57 @@ router.post("/unpause", (req, res) => {
           {
             updatedAt: new Date(),
             onPauseSince: null,
-            endDate: null,
+            PauseEndDate: null,
             pauseDesc: null,
           }
         ).then(() => {
           res.json({ result: true });
         });
       } else {
-        res.json({ result: false, error: "Cette habitude n'existe pas." });
+        res.json({ result: false, message: "Cette habitude n'existe pas." });
       }
     });
+  } catch (error) {
+    res.json({ result: false, error: error.message });
+  }
+});
+
+router.get("/unpauseauto", async (req, res) => {
+  try {
+    const now = moment.utc().toDate();
+
+    // Update tasks
+    const filter = {
+      creator: req.body._id,
+      type: "Habits",
+      PauseEndDate: { $lt: now },
+    };
+
+    const tasksToUpdate = await Task.find(filter)
+      .select("PauseEndDate pauseDesc onPauseSince")
+      .lean();
+
+    // let modifiedTasks = [];
+
+    for (const task of tasksToUpdate) {
+      const update = {
+        $set: {
+          onPauseSince: null,
+          PauseEndDate: null,
+          pauseDesc: null,
+          updatedAt: now,
+        },
+      };
+
+      const modifiedTask = await Task.findByIdAndUpdate(
+        task._id.toString(),
+        update
+      );
+
+      // modifiedTasks.push(modifiedTask);
+    }
+
+    res.json({ message: "Updated" });
   } catch (error) {
     res.json({ result: false, error: error.message });
   }
@@ -166,7 +309,7 @@ router.post("/unpause", (req, res) => {
 //  Route POST pour la modification d'une habitude
 router.post("/modify", (req, res) => {
   if (!checkBody(req.body, ["name", "key", "number", "label", "token"])) {
-    res.json({ result: false, error: "Champs manquants" });
+    res.json({ result: false, message: "Champs manquants" });
     return;
   }
   const {
@@ -174,12 +317,13 @@ router.post("/modify", (req, res) => {
     _id,
     name,
     description,
+    endDate,
     tags,
     difficulty,
     number,
     label,
     isFavorite,
-    endDate,
+    PauseEndDate,
     pauseDesc,
   } = req.body;
   try {
@@ -193,6 +337,7 @@ router.post("/modify", (req, res) => {
           {
             name,
             description,
+            endDate,
             updatedAt: new Date(),
             tags,
             difficulty,
@@ -201,14 +346,72 @@ router.post("/modify", (req, res) => {
               label,
             },
             isFavorite,
-            endDate,
+            PauseEndDate,
             pauseDesc,
           }
         ).then((data) => {
           res.json({ result: true, data });
         });
       } else {
-        res.json({ result: false, error: "Cette habitude n'existe pas." });
+        res.json({ result: false, message: "Cette habitude n'existe pas." });
+      }
+    });
+  } catch (error) {
+    res.json({ result: false, error: error.message });
+  }
+});
+
+router.post("/isdone", (req, res) => {
+  if (!checkBody(req.body, ["key"])) {
+    res.json({ result: false, message: "Champs manquants" });
+    return;
+  }
+  const { key, _id } = req.body;
+  try {
+    Task.findOne({
+      creator: _id,
+      _id: key,
+    }).then((data) => {
+      if (data) {
+        Task.updateOne(
+          { _id: data._id },
+          {
+            isDone: !data.isDone,
+          }
+        ).then(() => {
+          res.json({ result: true });
+        });
+      } else {
+        res.json({ result: false, message: "la data n'existe pas." });
+      }
+    });
+  } catch (error) {
+    res.json({ result: false, error: error.message });
+  }
+});
+
+router.post("/like", (req, res) => {
+  if (!checkBody(req.body, ["key"])) {
+    res.json({ result: false, message: "Champs manquants" });
+    return;
+  }
+  const { key, _id } = req.body;
+  try {
+    Task.findOne({
+      creator: _id,
+      _id: key,
+    }).then((data) => {
+      if (data) {
+        Task.updateOne(
+          { _id: data._id },
+          {
+            isFavorite: !data.isFavorite,
+          }
+        ).then(() => {
+          res.json({ result: true });
+        });
+      } else {
+        res.json({ result: false, message: "la data n'existe pas." });
       }
     });
   } catch (error) {
