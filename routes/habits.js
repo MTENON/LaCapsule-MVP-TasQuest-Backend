@@ -3,23 +3,26 @@ var router = express.Router();
 var moment = require("moment");
 
 const Task = require("../models/tasks");
+const Character = require("../models/characters");
 const { checkBody } = require("../functions/checkbody");
 
 //  Route GET pour l'affichage des habitudes
 router.get("/", (req, res) => {
   try {
-    Task.find({ creator: req.body._id, type: "Habits" }).then((data) => {
-      if (data) {
-        const tab = data.map((habits) => {
-          res.json({
-            result: true,
-            habits,
+    Task.find({ creator: req.body._id, type: "Habits" })
+      .select("-creator")
+      .then((data) => {
+        if (data) {
+          const tab = data.map((habits) => {
+            res.json({
+              result: true,
+              habits,
+            });
           });
-        });
-      } else {
-        res.json({ result: false, message: "la data n'existe pas." });
-      }
-    });
+        } else {
+          res.json({ result: false, message: "la data n'existe pas." });
+        }
+      });
   } catch (error) {
     res.json({ result: false, error: error.message });
   }
@@ -74,7 +77,7 @@ router.get("/valid", async (req, res) => {
 router.get("/unvalid", async (req, res) => {
   try {
     const now = moment.utc().toDate();
-    
+
     // Update tasks
     const filter = {
       creator: req.body._id,
@@ -85,11 +88,11 @@ router.get("/unvalid", async (req, res) => {
     };
 
     const tasksToUpdate = await Task.find(filter)
-    .select("startDate endDate repetition")
-    .lean();
-    
+      .select("startDate endDate repetition")
+      .lean();
+
     // let modifiedTasks = [];
-    
+
     for (const task of tasksToUpdate) {
       const update = {
         $set: {
@@ -97,18 +100,18 @@ router.get("/unvalid", async (req, res) => {
           endDate: moment(task.endDate)
             .utc()
             .add(task.repetition.number, task.repetition.label),
-            updatedAt: now,
-          },
-        };
+          updatedAt: now,
+        },
+      };
 
-        const modifiedTask = await Task.findByIdAndUpdate(
-          task._id.toString(),
-          update
-        );
-        
-        // modifiedTasks.push(modifiedTask);
+      const modifiedTask = await Task.findByIdAndUpdate(
+        task._id.toString(),
+        update
+      );
+
+      // modifiedTasks.push(modifiedTask);
     }
-    
+
     res.json({ message: "Updated" });
   } catch (error) {
     res.json({ result: false, error: error.message });
@@ -361,35 +364,59 @@ router.post("/modify", (req, res) => {
   }
 });
 
-router.post("/isdone", (req, res) => {
+//  Route POST pour la validation d'une habitude
+router.post("/isdone", async (req, res) => {
   if (!checkBody(req.body, ["key"])) {
     res.json({ result: false, message: "Champs manquants" });
     return;
   }
-  const { key, _id } = req.body;
   try {
-    Task.findOne({
+    const { key, _id } = req.body;
+
+    const habit = await Task.findOne({
       creator: _id,
       _id: key,
-    }).then((data) => {
-      if (data) {
-        Task.updateOne(
-          { _id: data._id },
-          {
-            isDone: !data.isDone,
-          }
-        ).then(() => {
-          res.json({ result: true });
-        });
-      } else {
-        res.json({ result: false, message: "la data n'existe pas." });
-      }
     });
-  } catch (error) {
-    res.json({ result: false, error: error.message });
+
+    if (!habit) {
+      console.log("Habitudes non trouvée");
+      res.status.json({ result: false, error: "Tâche non trouvée" });
+      return;
+    }
+
+    const newIsDone = !habit.isDone;
+
+    const pointsAndCoins = habit.difficulty;
+
+    await Task.updateOne({ creator: _id, _id: key }, { isDone: newIsDone });
+
+    const character = await Character.findOne({ user: _id });
+
+    if (!character) {
+      res.status.json({
+        result: false,
+        error: "Personnage non trouvé",
+      });
+      return;
+    }
+
+    const characterUpdate = {
+      $inc: {
+        "caracteristics.XP": newIsDone ? pointsAndCoins : -pointsAndCoins,
+        money: newIsDone ? pointsAndCoins : -pointsAndCoins,
+      },
+    };
+
+    await Character.updateOne({ _id: character._id }, characterUpdate);
+
+    res.json({ result: true });
+  } catch (err) {
+    console.error(err);
+    res.json({ result: false, error: err.message });
   }
 });
 
+//  Route POST pour liker une habitude
 router.post("/like", (req, res) => {
   if (!checkBody(req.body, ["key"])) {
     res.json({ result: false, message: "Champs manquants" });
