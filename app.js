@@ -10,6 +10,7 @@ var logger = require("morgan");
 var indexRouter = require("./routes/index");
 var usersRouter = require("./routes/users");
 var habitsRouter = require("./routes/habits");
+var tasksRouter = require("./routes/tasks");
 
 var app = express();
 
@@ -26,29 +27,34 @@ app.use(express.static(path.join(__dirname, "public")));
 
 const User = require("./models/users");
 app.use("/habits", (req, res, next) => {
-  // const token = req.body.token;
-  User.findOne({ token: req.body.token }).then((user) => {
-    if (!user) {
-      res.json({ result: false, error: "Token invalide" });
-      return;
-    }
-  });
-  next();
+    // const token = req.body.token;
+    User.findOne({ token: req.body.token }).then((user) => {
+        if (user === null) {
+            res.status(401);
+            res.json({ result: false, error: "Token invalide" });
+            return;
+        }
+        req.body = { ...req.body, _id: user._id };
+        next();
+    });
 });
 
 app.use("/tasks", (req, res, next) => {
-  // const token = req.body.token;
-  User.findOne({ token: req.body.token }).then((user) => {
-    if (!user) {
-      res.json({ result: false, error: "Token invalide" });
-      return;
-    }
-  });
-  next();
+    // const token = req.body.token;
+    User.findOne({ token: req.body.token }).then((user) => {
+        if (user === null) {
+            res.status(401);
+            res.json({ result: false, error: "Token invalide" });
+            return;
+        }
+        req.body = { ...req.body, _id: user._id };
+        next();
+    });
 });
 
 app.use("/", indexRouter);
 app.use("/users", usersRouter);
 app.use("/habits", habitsRouter);
+app.use("/tasks", tasksRouter);
 
 module.exports = app;
