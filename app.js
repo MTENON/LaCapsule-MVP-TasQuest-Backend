@@ -12,7 +12,7 @@ var usersRouter = require("./routes/users");
 var habitsRouter = require("./routes/habits");
 var classesRouter = require("./routes/classes");
 var roomsRouter = require("./routes/rooms");;
-var tasksRouter = require("./routes/tasks");
+// var tasksRouter = require("./routes/tasks");
 
 var app = express();
 
@@ -32,11 +32,11 @@ const User = require("./models/users");
 // function pour verifier la validitée du token
 const validateToken = async (req, res, next) => {
   try {
-    const user = await User.findOne({ token: req.body.token });
+    const user = await User.findOne({ token: req.headers.authorization });
     if (user === null || user === undefined) {
       return res.json({ result: false, error: "Token invalide" });
     }
-    req.body = { ...req.body, _id: user._id };
+    req.body._id =  user._id ;
     next();
   } catch (error) {
     console.error(error);
@@ -46,13 +46,13 @@ const validateToken = async (req, res, next) => {
 
 // appelle de la function de verification du token par famille de routes
 app.use("/habits", validateToken);
-app.use("/tasks", validateToken);
+// app.use("/tasks", validateToken);
 
 app.use("/", indexRouter);
 app.use("/users", usersRouter);
 app.use("/habits", habitsRouter);
 app.use("/classes", classesRouter);
 app.use("/rooms", roomsRouter);
-app.use("/tasks", tasksRouter);
+// app.use("/tasks", tasksRouter);
 
 module.exports = app;

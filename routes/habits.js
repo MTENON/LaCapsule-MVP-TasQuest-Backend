@@ -6,8 +6,8 @@ const Task = require("../models/tasks");
 const Character = require("../models/characters");
 const { checkBody } = require("../functions/checkbody");
 
-//  Route POST pour l'affichage des habitudes
-router.post("/", (req, res) => {
+//  Route GET pour l'affichage des habitudes
+router.get("/", (req, res) => {
   try {
     Task.find({ creator: req.body._id, type: "Habits" })
       .select("-creator")
@@ -37,8 +37,8 @@ router.post("/", (req, res) => {
   }
 });
 
-//  Route POST test pour la mise a jour des habitudes terminer et réalisé
-router.post("/valid", async (req, res) => {
+//  Route GET test pour la mise a jour des habitudes terminer et réalisé
+router.get("/valid", async (req, res) => {
   try {
     const now = moment.utc().toDate();
 
@@ -83,8 +83,8 @@ router.post("/valid", async (req, res) => {
   }
 });
 
-//  Route POST test pour la mise a jour des habitudes terminer et non réalisé
-router.post("/unvalid", async (req, res) => {
+//  Route GET test pour la mise a jour des habitudes terminer et non réalisé
+router.get("/unvalid", async (req, res) => {
   try {
     const now = moment.utc().toDate();
 
@@ -278,8 +278,8 @@ router.post("/unpause", (req, res) => {
   }
 });
 
-//  Route POST test pour la mise a jour des habitudes dont la date de pause est depassé
-router.post("/unpauseauto", async (req, res) => {
+//  Route GET test pour la mise a jour des habitudes dont la date de pause est depassé
+router.get("/unpauseauto", async (req, res) => {
   try {
     const now = moment.utc().toDate();
 
@@ -420,7 +420,7 @@ router.post("/isdone", async (req, res) => {
 
     await Character.updateOne({ _id: character._id }, characterUpdate);
 
-    res.json({ result: true });
+    res.json({ result: true, isDone: habit.isDone });
   } catch (err) {
     console.error(err);
     res.json({ result: false, error: err.message });
