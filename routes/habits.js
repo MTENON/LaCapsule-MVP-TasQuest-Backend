@@ -6,30 +6,39 @@ const Task = require("../models/tasks");
 const Character = require("../models/characters");
 const { checkBody } = require("../functions/checkbody");
 
-//  Route GET pour l'affichage des habitudes
-router.get("/", (req, res) => {
+//  Route POST pour l'affichage des habitudes
+router.post("/", (req, res) => {
   try {
     Task.find({ creator: req.body._id, type: "Habits" })
       .select("-creator")
       .then((data) => {
-        if (data) {
-          const tab = data.map((habits) => {
-            res.json({
-              result: true,
-              habits,
-            });
-          });
-        } else {
-          res.json({ result: false, message: "la data n'existe pas." });
+        if (!data) {
+          res.json({ result: false, message: "l'utillisateur n'existe pas." });
+          return;
         }
+        if (data === 0) {
+          res.json({
+            result: false,
+            message: "l'utillisateur' n'a aucune habitudes.",
+          });
+          return;
+        }
+        let habits = [];
+        data.forEach((data) => {
+          habits.push(data);
+        });
+        res.json({
+          result: true,
+          habits,
+        });
       });
   } catch (error) {
     res.json({ result: false, error: error.message });
   }
 });
 
-//  Route GET test pour la mise a jour des habitudes terminer et réalisé
-router.get("/valid", async (req, res) => {
+//  Route POST test pour la mise a jour des habitudes terminer et réalisé
+router.post("/valid", async (req, res) => {
   try {
     const now = moment.utc().toDate();
 
@@ -74,7 +83,8 @@ router.get("/valid", async (req, res) => {
   }
 });
 
-router.get("/unvalid", async (req, res) => {
+//  Route POST test pour la mise a jour des habitudes terminer et non réalisé
+router.post("/unvalid", async (req, res) => {
   try {
     const now = moment.utc().toDate();
 
@@ -118,7 +128,7 @@ router.get("/unvalid", async (req, res) => {
   }
 });
 
-//  Route post pour la creation d'une habitude
+//  Route POST pour la creation d'une habitude
 router.post("/create", (req, res) => {
   if (!checkBody(req.body, ["name", "number", "label"])) {
     res.json({ result: false, message: "Champs manquants" });
@@ -268,7 +278,8 @@ router.post("/unpause", (req, res) => {
   }
 });
 
-router.get("/unpauseauto", async (req, res) => {
+//  Route POST test pour la mise a jour des habitudes dont la date de pause est depassé
+router.post("/unpauseauto", async (req, res) => {
   try {
     const now = moment.utc().toDate();
 
