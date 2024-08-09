@@ -250,10 +250,14 @@ router.post('/signin', (req, res) => {
 // --- ROUTE LOGOUT --- ///
 // Permet la déconnection de l'utilisateur
 
-router.get('/logout', (req, res) => {
+router.delete('/logout', async (req, res) => {
 
   try {
-    res.json({ result: true, data: 'deconnection' });
+    const userData = await User.updateOne({ token: req.body.token }, { token: "" })
+    if (userData === null || userData === undefined) {
+      res.json({ result: false, data: 'No data' })
+    }
+    res.json({ result: true, data: userData });
   } catch (error) {
     alert(error.message);
   }
