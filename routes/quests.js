@@ -1,8 +1,10 @@
 var express = require('express');
 var router = express.Router();
 
+const Character = require('../models/characters')
 const Quest = require('../models/quests');
 const { randomNumber } = require('../functions/randomNumber')
+const { checkBody } = require('../functions/checkbody')
 
 router.get('/', async (req, res) => {
     const questData = await Quest.find({});
@@ -54,5 +56,41 @@ router.get('/:questId', async (req, res) => {
     }
 
 });
+
+router.post('/newQuest', async (req, res) => {
+    try {
+        if (!checkBody(req.body, ['characterId', 'questId'])) {
+            res.json({ result: false, data: 'Checkbody returned false' })
+            return;
+        }
+        const characterUpdate = await Character.updateOne(
+            { _id: req.body.characterId },
+            { quest: req.body }
+        )
+
+        res.json({ result: true, data: characterUpdate })
+
+    } catch (error) {
+        res.json({ result: false, data: error })
+    }
+});
+
+router.delete('/stopQuest', async (req, res) => {
+    try {
+        if (!checkBody(req.body, ['characterId'])) {
+            res.json({ result: false, data: 'Checkbody returned false' })
+            return;
+        }
+        const characterUpdate = await Character.updateOne(
+            { _id: req.body.characterId },
+            { quest: "" }
+        )
+
+        res.json({ result: true, data: characterUpdate })
+
+    } catch (error) {
+        res.json({ result: false, data: error })
+    }
+})
 
 module.exports = router;

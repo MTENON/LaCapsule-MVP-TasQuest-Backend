@@ -200,7 +200,7 @@ router.post('/signup', async (req, res) => {
 // --- ROUTE SIGN IN --- ///
 // Permet l'authentification d'un utilisateur déjà enregistré
 
-router.post('/signin', (req, res) => {
+router.post('/signin', async (req, res) => {
 
   if (checkBody(req.body, ['username', 'password']) || checkBody(req.body, ['email', 'password'])) {
 
@@ -210,42 +210,62 @@ router.post('/signin', (req, res) => {
     return;
   };
 
-
-
-  User.findOne({
+  const data = await User.findOne({
     $or:
       [{ username: req.body.username },
       { email: req.body.username }]
   })
-    .then((data) => {
-      if (!data) {
-        res.json({ result: false, data: 'No user in database' })
-        return;
-      } else if (data && !bcrypt.compareSync(req.body.password, data.password)) {
-        res.json({ result: false, error: 'wrong password' })
-      } else if (data && bcrypt.compareSync(req.body.password, data.password)) {
 
-        User.updateOne({
-          $or:
-            [{ username: req.body.username },
-            { email: req.body.username }]
-        },
-          { token: uid2(32) })
-          .then(() => {
-            User.findOne({
-              $or:
-                [{ username: req.body.username },
-                { email: req.body.username }]
-            })
-              .then((data) => {
-                const result = { username: data.username, token: data.token }
-                res.json({ result: true, data: result })
-              })
-          })
+  if (!data) {
+    res.json({ result: false, data: 'No user in database' })
+    return;
+  } else if (data && !bcrypt.compareSync(req.body.password, data.password)) {
+    res.json({ result: false, error: 'wrong password' })
+  } else if (data && bcrypt.compareSync(req.body.password, data.password)) {
 
-      }
-    });
-})
+    await User.updateOne({
+      $or:
+        [{ username: req.body.username },
+        { email: req.body.username }]
+    },
+      { token: uid2(32) })
+
+    await User.updateOne({
+      $or:
+        [{ username: req.body.username },
+        { email: req.body.username }]
+    },
+      { lastConnectionAt: new Date() })
+
+  }
+
+  const dataUpdate = await User.findOne({
+    $or:
+      [{ username: req.body.username },
+      { email: req.body.username }]
+  })
+
+  if (!dataUpdate) {
+    res.json({ result: false, data: 'No user in database' })
+    return;
+  }
+
+  const characterData = await Character.findOne({ user: dataUpdate._id })
+
+  const result = {
+    username: dataUpdate.username,
+    token: dataUpdate.token,
+    characterId: characterData._id,
+    characterName: characterData.name,
+    money: characterData.money,
+    HP: characterData.caracteristics.HP,
+    XP: characterData.caracteristics.XP,
+    caracs: characterData.caracteristics.caracs,
+    questId: characterData.quest
+  }
+  res.json({ result: true, data: result })
+
+});
 
 // --- ROUTE LOGOUT --- ///
 // Permet la déconnection de l'utilisateur
