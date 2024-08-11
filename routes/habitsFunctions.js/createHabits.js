@@ -26,7 +26,7 @@ async function createHabits(obj, res) {
   }
 
   const filter = {
-    creator: req.body._id,
+    creator: obj._id,
     type: "Habits",
     _id: taskId,
   };

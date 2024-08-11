@@ -6,7 +6,7 @@ async function unvalidUpdate(obj, res) {
 
   // Update habits
   const filter = {
-    creator: req.body._id,
+    creator: obj._id,
     type: "Habits",
     isDone: false,
     endDate: { $lt: now },
