@@ -6,6 +6,7 @@ const Quest = require('../models/quests');
 const { randomNumber } = require('../functions/randomNumber')
 const { checkBody } = require('../functions/checkbody')
 
+//Route pour récupérer toutes les quêtes.
 router.get('/', async (req, res) => {
     const questData = await Quest.find({});
     if (questData.length > 0) {
@@ -15,6 +16,7 @@ router.get('/', async (req, res) => {
     }
 });
 
+//Route GET pour les 3 quêtes aléatoires du menu de choix de quête
 router.get('/threeQuests', async (req, res) => {
 
     try {
@@ -39,7 +41,8 @@ router.get('/threeQuests', async (req, res) => {
     }
 });
 
-router.get('/:questId', async (req, res) => {
+//Route GET pour récupérer une quête avec son Id
+router.get('/getById/:questId', async (req, res) => {
 
     try {
 
@@ -57,6 +60,7 @@ router.get('/:questId', async (req, res) => {
 
 });
 
+//Route d'ajout de quête au personnage
 router.post('/newQuest', async (req, res) => {
     try {
         if (!checkBody(req.body, ['characterId', 'questId'])) {
@@ -65,7 +69,7 @@ router.post('/newQuest', async (req, res) => {
         }
         const characterUpdate = await Character.updateOne(
             { _id: req.body.characterId },
-            { quest: req.body }
+            { quest: req.body.questId }
         )
 
         res.json({ result: true, data: characterUpdate })
@@ -75,6 +79,7 @@ router.post('/newQuest', async (req, res) => {
     }
 });
 
+//Route DELETE enlève la quête en cours du personnage
 router.delete('/stopQuest', async (req, res) => {
     try {
         if (!checkBody(req.body, ['characterId'])) {
@@ -83,11 +88,27 @@ router.delete('/stopQuest', async (req, res) => {
         }
         const characterUpdate = await Character.updateOne(
             { _id: req.body.characterId },
-            { quest: "" }
+            { quest: null }
         )
 
         res.json({ result: true, data: characterUpdate })
 
+    } catch (error) {
+        res.json({ result: false, data: error })
+    }
+});
+
+router.get('/joinQuest', async (req, res) => {
+    try {
+        const characterData = await Character.find({
+            quest: { $ne: null }
+        })
+
+        const questList = []
+        characterData.map((data) => {
+            questList.push({ creator: data.name, questId: data.quest })
+        })
+        res.json({ result: true, data: questList })
     } catch (error) {
         res.json({ result: false, data: error })
     }
