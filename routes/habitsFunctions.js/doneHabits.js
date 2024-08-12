@@ -10,9 +10,11 @@ async function doneHabits(obj, res) {
   });
 
   if (!habit) {
-    res.status.json({ result: false, error: "L'habitude n'existe pas." });
+    res.json({ result: false, message: "L'habitude n'existe pas." });
     return;
   }
+
+  const newIsDone = !habit.isDone;
 
   const pointsAndCoins = habit.difficulty;
 
@@ -26,7 +28,7 @@ async function doneHabits(obj, res) {
   if (!character) {
     res.status.json({
       result: false,
-      error: "Personnage non trouvé",
+      message: "Personnage non trouvé",
     });
     return;
   }
@@ -40,7 +42,11 @@ async function doneHabits(obj, res) {
 
   await Character.updateOne({ _id: character._id }, characterUpdate);
 
-  res.json({ result: true, isDone: habit.isDone });
+  res.json({
+    result: true,
+    isDone: habit.isDone,
+    message: "habitude mise a jour",
+  });
 }
 
 module.exports = { doneHabits };

@@ -1,8 +1,9 @@
 var express = require("express");
 var router = express.Router();
 
- // <----------------> FONCTION DES ROUTES <----------------> \\
+// <----------------> FONCTION DES ROUTES <----------------> \\
 const { checkBody } = require("../functions/checkbody");
+const { getHabits } = require("./habitsFunctions.js/getHabits");
 const { validUpdate } = require("./habitsFunctions.js/validUpdate");
 const { unvalidUpdate } = require("./habitsFunctions.js/unvalidUpdate");
 const { createHabits } = require("./habitsFunctions.js/createHabits");
@@ -12,33 +13,12 @@ const { unpauseHabitsAuto } = require("./habitsFunctions.js/unpauseHabitsAuto");
 const { modifyHabits } = require("./habitsFunctions.js/modifyHabits");
 const { doneHabits } = require("./habitsFunctions.js/doneHabits");
 const { likeHabits } = require("./habitsFunctions.js/likeHabits");
+const { deleteHabits } = require("./habitsFunctions.js/deleteHabits");
 
 //  Route GET pour l'affichage des habitudes
 router.get("/", (req, res) => {
   try {
-    Task.find({ creator: req.body._id, type: "Habits" })
-      .select("-creator")
-      .then((data) => {
-        if (!data) {
-          res.json({ result: false, message: "l'utillisateur n'existe pas." });
-          return;
-        }
-        if (data === 0) {
-          res.json({
-            result: false,
-            message: "l'utillisateur' n'a aucune habitudes.",
-          });
-          return;
-        }
-        let habits = [];
-        data.forEach((data) => {
-          habits.push(data);
-        });
-        res.json({
-          result: true,
-          habits,
-        });
-      });
+    getHabits(req.body, res);
   } catch (error) {
     res.json({ result: false, error: error.message });
   }
@@ -65,9 +45,10 @@ router.get("/unvalid", async (req, res) => {
 //  Route POST pour la creation d'une habitude
 router.post("/create", (req, res) => {
   if (!checkBody(req.body, ["name", "number", "label"])) {
-    res.json({ result: false, message: "Champs manquants" });
+    res.json({ result: false, message: "Champs manquants pour la creation" });
     return;
   }
+  console.log(req.body);
   try {
     createHabits(req.body, res);
   } catch (error) {
@@ -144,7 +125,20 @@ router.post("/like", (req, res) => {
     return;
   }
   try {
-    likeHabits(req.body, res);    
+    likeHabits(req.body, res);
+  } catch (error) {
+    res.json({ result: false, error: error.message });
+  }
+});
+
+//  Route DELETE pour supprimer une habitude
+router.post("/delete", (req, res) => {
+  if (!checkBody(req.body, ["taskId"])) {
+    res.json({ result: false, message: "Champs manquants" });
+    return;
+  }
+  try {
+    deleteHabits(req.body, res);
   } catch (error) {
     res.json({ result: false, error: error.message });
   }

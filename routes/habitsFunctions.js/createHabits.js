@@ -12,7 +12,7 @@ async function createHabits(obj, res) {
     label,
     isFavorite,
     _id,
-    startDate,
+    // startDate,
   } = obj;
 
   if (
@@ -27,13 +27,11 @@ async function createHabits(obj, res) {
 
   const filter = {
     creator: obj._id,
-    type: "Habits",
     _id: taskId,
+    type: "Habits",
   };
 
-  const habit = await Task.find(filter)
-    .select("startDate endDate repetition")
-    .lean();
+  const habit = await Task.findOne(filter).lean();
 
   if (habit) {
     res.json({
@@ -43,14 +41,16 @@ async function createHabits(obj, res) {
     return;
   }
 
+  const startDate = moment().utc();
   const endDate = moment(startDate).utc().add(number, label);
   console.log(endDate);
+
   const newTask = new Task({
     creator: _id,
     type: "Habits",
     name,
     description,
-    startDate: moment().utc().add(),
+    startDate,
     endDate,
     tags,
     difficulty,
@@ -63,7 +63,7 @@ async function createHabits(obj, res) {
 
   await newTask.save();
 
-  res.json({ result: true });
+  res.json({ result: true, message: "habitude créer" });
 }
 
 module.exports = { createHabits };

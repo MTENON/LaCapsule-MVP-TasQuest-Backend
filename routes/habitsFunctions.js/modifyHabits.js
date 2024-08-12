@@ -12,11 +12,10 @@ async function modifyHabits(obj, res) {
     number,
     label,
     isFavorite,
+    startDate,
     PauseEndDate,
     pauseDesc,
   } = obj;
-
-  const endDate = moment(data.startDate).utc().add(number, label);
 
   const filter = {
     creator: _id,
@@ -24,10 +23,14 @@ async function modifyHabits(obj, res) {
     _id: taskId,
   };
 
+  const habit = await Task.findOne(filter).select("startDate").lean();
+
+  // const endDate = moment(habit.startDate).utc().add(number, label);
+
   const newData = {
     name,
     description,
-    endDate,
+    endDate: moment(startDate).utc().add(number, label),
     updatedAt: moment().utc(),
     tags,
     difficulty,
@@ -40,8 +43,6 @@ async function modifyHabits(obj, res) {
     pauseDesc,
   };
 
-  const habit = await Task.findOne(filter).lean();
-
   if (!habit) {
     res.json({
       result: false,
@@ -50,7 +51,7 @@ async function modifyHabits(obj, res) {
     return;
   }
 
-  await Task.updateOne({ _id: data._id }, { newData });
+  await Task.updateOne({ _id: habit._id }, { newData });
 
   res.json({ result: true, message: "Habitude modifié" });
 }

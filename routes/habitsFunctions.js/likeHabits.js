@@ -9,16 +9,20 @@ async function likeHabits(obj, res) {
   });
 
   if (!habit) {
-    res.status.json({ result: false, error: "L'habitude non trouvée" });
+    res.json({ result: false, message: "Habitude non trouvée" });
     return;
   }
 
   await Task.updateOne(
     { creator: _id, _id: taskId },
-    { isFavorite: !data.isFavorite }
+    { isFavorite: !habit.isFavorite }
   );
 
-  res.json({ result: true, isFavorite: habit.isFavorite });
+  res.json({
+    result: true,
+    isFavorite: habit.isFavorite,
+    message: "habitude mise a jours",
+  });
 }
 
 module.exports = { likeHabits };
