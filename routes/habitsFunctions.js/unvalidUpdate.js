@@ -30,7 +30,8 @@ async function unvalidUpdate(obj, res) {
       },
     };
 
-    const modifiedHabit = await Task.findByIdAndUpdate(
+    // const modifiedHabit = 
+    await Task.findByIdAndUpdate(
       habit._id.toString(),
       update
     );

@@ -93,7 +93,7 @@ router.get("/unpauseauto", async (req, res) => {
 });
 
 //  Route POST pour la modification d'une habitude
-router.post("/modify", (req, res) => {
+router.post("/modify", async (req, res) => {
   if (!checkBody(req.body, ["name", "taskId", "number", "label"])) {
     res.json({ result: false, message: "Champs manquants" });
     return;

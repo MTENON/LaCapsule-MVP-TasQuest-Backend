@@ -40,7 +40,7 @@ async function doneHabits(obj, res) {
     },
   };
 
-  await Character.updateOne({ _id: character._id }, characterUpdate);
+  await Character.findByIdAndUpdate(character._id.toString(), characterUpdate);
 
   res.json({
     result: true,

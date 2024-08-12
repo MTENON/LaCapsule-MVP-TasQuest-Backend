@@ -35,7 +35,7 @@ async function unpauseHabits(obj, res) {
     return;
   }
 
-  await Task.updateOne({ _id: data._id }, { newData });
+  await Task.findByIdAndUpdate(habit._id.toString(), newData);
 
   res.json({ result: true, message: "Habitude mise en pause" });
 }
