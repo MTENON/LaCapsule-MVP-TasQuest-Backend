@@ -14,6 +14,7 @@ var classesRouter = require("./routes/classes");
 var roomsRouter = require("./routes/rooms");
 var tasksRouter = require("./routes/tasks");
 var questsRouter = require("./routes/quests")
+var itemRouter = require("./routes/items");
 
 var app = express();
 
@@ -48,7 +49,8 @@ const validateToken = async (req, res, next) => {
 // appelle de la function de verification du token par famille de routes
 app.use("/habits", validateToken);
 app.use("/tasks", validateToken);
-app.use("/quests", validateToken)
+app.use("/quests", validateToken);
+app.use("/items", validateToken);
 
 app.use("/", indexRouter);
 app.use("/users", usersRouter);
@@ -57,5 +59,6 @@ app.use("/tasks", tasksRouter);
 app.use("/classes", classesRouter);
 app.use("/rooms", roomsRouter);
 app.use("/quests", questsRouter);
+app.use("/items", itemRouter);
 
 module.exports = app;
