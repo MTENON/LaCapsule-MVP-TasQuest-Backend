@@ -9,9 +9,11 @@ async function pauseHabits(obj, res) {
     _id: taskId,
   };
 
+  const now = moment.utc().toDate();
+
   const newData = {
-    updatedAt: new Date(),
-    onPauseSince: new Date(),
+    updatedAt: now,
+    onPauseSince: now,
     PauseEndDate,
     pauseDesc,
   };

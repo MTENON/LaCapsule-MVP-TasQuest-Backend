@@ -10,8 +10,10 @@ async function unpauseHabits(obj, res) {
     _id: taskId,
   };
 
+const now = moment.utc().toDate();
+
   const newData = {
-    updatedAt: new Date(),
+    updatedAt: now,
     onPauseSince: null,
     PauseEndDate: null,
     pauseDesc: null,

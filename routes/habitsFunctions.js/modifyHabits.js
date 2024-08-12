@@ -29,13 +29,13 @@ async function modifyHabits(obj, res) {
     )
     .lean();
 
-  const now = new Date();
+    const now = moment.utc().toDate();
 
   const newData = {
     name,
     description,
     endDate: moment(startDate).utc().add(number, label),
-    updatedAt: moment(now).utc(),
+    updatedAt: now,
     tags,
     difficulty,
     repetition: {

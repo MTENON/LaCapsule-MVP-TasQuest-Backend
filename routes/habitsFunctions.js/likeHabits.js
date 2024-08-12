@@ -1,7 +1,10 @@
+var moment = require("moment");
 const Task = require("../../models/tasks");
 
 async function likeHabits(obj, res) {
   const { taskId, _id } = obj;
+
+  const now = moment.utc().toDate();
 
   const habit = await Task.findOne({
     creator: _id,
@@ -15,7 +18,7 @@ async function likeHabits(obj, res) {
 
   await Task.updateOne(
     { creator: _id, _id: taskId },
-    { isFavorite: !habit.isFavorite }
+    { isFavorite: !habit.isFavorite, updatedAt: now }
   );
 
   res.json({

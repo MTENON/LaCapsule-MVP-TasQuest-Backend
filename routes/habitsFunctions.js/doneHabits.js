@@ -1,3 +1,4 @@
+var moment = require("moment");
 const Task = require("../../models/tasks");
 const Character = require("../../models/characters");
 
@@ -16,11 +17,13 @@ async function doneHabits(obj, res) {
 
   const newIsDone = !habit.isDone;
 
+  const now = moment.utc().toDate();
+
   const pointsAndCoins = habit.difficulty;
 
   await Task.updateOne(
     { creator: _id, _id: taskId },
-    { isDone: !habit.isDone }
+    { isDone: !habit.isDone, updatedAt: now, }
   );
 
   const character = await Character.findOne({ user: _id });
