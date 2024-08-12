@@ -93,7 +93,7 @@ router.delete('/stopQuest', async (req, res) => {
             { quest: null }
         )
 
-        res.json({ result: true, data: characterUpdate })
+        res.json({ result: true, data: 'Quest deleted' })
 
     } catch (error) {
         res.json({ result: false, data: error })
@@ -136,10 +136,10 @@ router.post('/addRoom', async (req, res) => {
 
         const isRoomExist = await Room.findOne({ creator: '66b8f26e760847d3b598061a' });
 
-        if (isRoomExist) {
-            res.json({ result: false, data: 'user already have quest' });
-            return;
-        };
+        // if (isRoomExist) {
+        //     res.json({ result: false, data: 'user already have quest' });
+        //     return;
+        // };
 
         const newRoom = await new Room({
             messages: [],
@@ -173,8 +173,14 @@ router.get('/room/:roomId/getMessages', async (req, res) => {
     try {
 
         const roomData = await Room.findById(req.params.roomId)
+            .populate({ path: 'messages.user', select: 'username' })
 
-        res.json({ result: true, data: roomData.messages })
+        const data = [];
+        await roomData.messages.map((e) => {
+            data.push({ user: e.user.username, content: e.content, date: e.date })
+        })
+
+        res.json({ result: true, data: data })
 
     } catch (error) {
         res.json({ result: false, data: error })
@@ -185,16 +191,18 @@ router.get('/room/:roomId/getMessages', async (req, res) => {
 router.post('/room/:roomId/addMessage', async (req, res) => {
 
     try {
-        if (!checkBody(req.body, ['user', 'content'])) {
+        if (!checkBody(req.body, ['token', 'content'])) {
             res.json({ result: false, data: 'Checkbody returned false' })
         }
 
-        const updatedRoom = await Room.updateOne(
+        const userData = await User.findOne({ token: req.body.token });
+
+        await Room.updateOne(
             { _id: req.params.roomId },
             {
                 $push: {
                     messages: {
-                        user: req.body.user,
+                        user: userData._id,
                         content: req.body.content,
                         date: new Date()
                     }
@@ -202,7 +210,21 @@ router.post('/room/:roomId/addMessage', async (req, res) => {
             }
         )
 
-        res.json({ result: true, data: updatedRoom })
+        const messagerie = await Room.findById(req.params.roomId).populate(
+            {
+                path: 'messages.user',
+                select: 'username'
+            }
+        )
+
+        const data = []
+        await messagerie.messages.map((e) => {
+            data.push({ username: e.user.username, content: e.content, date: e.date })
+        })
+
+        //AJOUTER MOMENT SI ON VEUT MANIPULER ET AFFICHER LA DATE DU MESSAGE
+
+        res.json({ result: true, data })
 
     } catch (error) {
         res.json({ result: false, data: error })
@@ -211,7 +233,7 @@ router.post('/room/:roomId/addMessage', async (req, res) => {
 })
 
 //Un utilisateur quitte la quête
-router.put('/room/:roomId/leaveRoom', async (req, res) => {
+router.delete('/room/:roomId/leaveRoom', async (req, res) => {
 
     try {
 
@@ -236,7 +258,8 @@ router.put('/room/:roomId/leaveRoom', async (req, res) => {
         if (roomData.users.length === 0) {
             const deletedRoom = await Room.deleteOne({ _id: req.params.roomId });
 
-            res.json({ result: true, deletedRoom, data: 'Room has been deleted' })
+            res.json({ result: true, deletedRoom, data: 'Room has been deleted' });
+            return;
         }
 
         res.json({ result: true, data: `${userData.username} just leaved the Room` });

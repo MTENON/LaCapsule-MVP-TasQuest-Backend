@@ -39,7 +39,7 @@ const characterSchema = mongoose.Schema({
   money: { type: Number, default: 5 }, // { type: Number, default: 10 }
   inventory: [{ type: mongoose.Schema.Types.ObjectId, ref: "items" }],
   equipment: equipmentSchema,
-  quest: { type: mongoose.Schema.Types.ObjectId, ref: "quests" },
+  quest: { type: mongoose.Schema.Types.ObjectId, ref: "rooms" },
 });
 
 const Character = mongoose.model("characters", characterSchema);
