@@ -11,6 +11,7 @@ var indexRouter = require("./routes/index");
 var usersRouter = require("./routes/users");
 var habitsRouter = require("./routes/habits");
 var classesRouter = require("./routes/classes");
+// var roomsRouter = require("./routes/rooms");
 var tasksRouter = require("./routes/tasks");
 var questsRouter = require("./routes/quests")
 var itemRouter = require("./routes/items");
@@ -56,6 +57,7 @@ app.use("/users", usersRouter);
 app.use("/habits", habitsRouter);
 app.use("/tasks", tasksRouter);
 app.use("/classes", classesRouter);
+// app.use("/rooms", roomsRouter);
 app.use("/quests", questsRouter);
 app.use("/items", itemRouter);
 

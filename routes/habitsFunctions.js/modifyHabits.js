@@ -23,15 +23,19 @@ async function modifyHabits(obj, res) {
     _id: taskId,
   };
 
-  const habit = await Task.findOne(filter).select("startDate").lean();
+  const habit = await Task.findOne(filter)
+    .select(
+      "name description endDate updatedAt tags difficulty repetition.number repetition.label isFavorite PauseEndDate pauseDesc"
+    )
+    .lean();
 
-  // const endDate = moment(habit.startDate).utc().add(number, label);
+  const now = new Date();
 
   const newData = {
     name,
     description,
     endDate: moment(startDate).utc().add(number, label),
-    updatedAt: moment().utc(),
+    updatedAt: moment(now).utc(),
     tags,
     difficulty,
     repetition: {
