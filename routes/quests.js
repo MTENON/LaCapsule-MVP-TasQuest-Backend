@@ -120,21 +120,36 @@ router.get('/joinQuest', async (req, res) => {
 router.post('/addRoom', async (req, res) => {
     try {
 
-        if (!checkBody(req.body, ['creator', 'questId'])) {
+        if (!checkBody(req.body, ['token', 'questId'])) {
             res.json({ result: false, data: 'Checkbody returned false' })
+            return;
         }
+
+        const userData = await User.findOne({ token: req.body.token });
+
+        if (!userData) {
+            res.json({ result: false, data: 'No user found' });
+            return;
+        }
+
+        const isRoomExist = await Room.findOne({ creator: '66b8f26e760847d3b598061a' });
+
+        if (isRoomExist) {
+            res.json({ result: false, data: 'user already have quest' });
+            return;
+        };
 
         const newRoom = await new Room({
             messages: [],
-            creator: req.body.creator,
-            users: [req.body.creator],
+            creator: userData._id,
+            users: [userData._id],
             quest: req.body.questId,
             messages: []
         })
 
-        await newRoom.save();
+        const roomData = await newRoom.save();
 
-        res.json({ result: true, data: 'New Room saved' })
+        res.json({ result: true, data: roomData._id })
 
     } catch (error) {
         res.json({ result: false, data: error })
@@ -152,8 +167,16 @@ router.post('/room/:roomId/addMessage', async (req, res) => {
 })
 
 //Detruire la Room
-router.post('/room/:roomId/destroyRoom', async (req, res) => {
+router.delete('/room/:roomId/destroyRoom', async (req, res) => {
+    try {
 
+        const deletedRoom = await Room.deleteOne({ _id: req.params.roomId });
+
+        res.json({ result: true, data: deletedRoom })
+
+    } catch (error) {
+        res.json({ result: false, data: error })
+    }
 })
 
 //Récupérer les utilisateurs de la room pour affichage
