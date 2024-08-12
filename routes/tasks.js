@@ -9,7 +9,6 @@ const { checkBody } = require("../functions/checkbody");
 
 //Route créer une nouvelle tache
 router.post("/new", (req, res) => {
-    //Paramètres obbligatoires
     if (!checkBody(req.body, ["name", "difficulty", "token"])) {
         res.json({ result: false, message: "Un champ est manquant" });
         return;
@@ -17,13 +16,13 @@ router.post("/new", (req, res) => {
     const { name, description, tags, difficulty, endDate, isUrgent, _id } =
         req.body;
 
-    //Recherche si la tache existe déjà
+    console.log("Creating task for user:", _id);
+
     Task.findOne({
         creator: _id,
         name: { $regex: new RegExp(name, "i") },
     })
         .then((data) => {
-            //Création de la nouvelle tache si la tache non trouvée
             if (!data) {
                 const newTask = new Task({
                     type: "Task",
@@ -36,13 +35,14 @@ router.post("/new", (req, res) => {
                     tags,
                 });
 
-                //Enregistrement de la nouvelle tache
                 newTask
                     .save()
                     .then((newDoc) => {
+                        console.log("Task created:", newDoc);
                         res.json({ result: true, task: newDoc });
                     })
                     .catch((error) => {
+                        console.error("Save error:", error.message);
                         res.json({
                             result: false,
                             message: "Erreur lors de la sauvegarde",
@@ -50,10 +50,12 @@ router.post("/new", (req, res) => {
                         });
                     });
             } else {
-                res.json({ result: false, message: "La tache existe" });
+                console.log("Task already exists");
+                res.json({ result: false, message: "La tâche existe" });
             }
         })
         .catch((error) => {
+            console.error("Find error:", error.message);
             res.status(500).json({
                 result: false,
                 message: "Erreur serveur",
@@ -66,6 +68,27 @@ router.post("/new", (req, res) => {
 router.get("/", (req, res) => {
     const { _id } = req.body;
     Task.find({ type: "Task", creator: _id })
+        .then((data) => {
+            //Aucune tache enregistrée pour l'utilisateur
+            if (data.length < 1) {
+                res.json({ result: true, message: "Aucune tache est créé" });
+            } else {
+                res.json({ result: true, data });
+            }
+        })
+        .catch((error) => {
+            res.json({
+                result: false,
+                message: "Erreur serveur",
+                error: error.message,
+            });
+        });
+});
+
+router.get("/:_id", (req, res) => {
+    const { _id: userId } = req.body;
+    const { _id: idTask } = req.params;
+    Task.findOne({ _id: idTask, creator: userId })
         .then((data) => {
             //Aucune tache enregistrée pour l'utilisateur
             if (data.length < 1) {
@@ -144,7 +167,7 @@ router.put("/isdone/:_id", async (req, res) => {
     }
 });
 
-router.put("/update/:_id", async (req, res) => {
+router.post("/update/:_id", async (req, res) => {
     try {
         const {
             _id: userId,
@@ -229,14 +252,14 @@ router.put("/isfavorite/:_id", async (req, res) => {
 });
 
 //Mettre une nouvelle tache
-router.post("/newtodo/:_id", async (req, res) => {
+router.post("/todo/:taskId/new", async (req, res) => {
     try {
-        const { userId, toDo } = req.body;
-        const { _id } = req.params;
+        const { _id: userId, toDo } = req.body;
+        const { taskId } = req.params;
 
         const task = await Task.findOne({
             creator: userId,
-            _id,
+            _id: taskId,
         });
 
         if (!task) {
@@ -257,7 +280,25 @@ router.post("/newtodo/:_id", async (req, res) => {
 
         res.json({ result: true, task });
     } catch (err) {
-        console.error(err);
+        res.json({ result: false, error: err.message });
+    }
+});
+
+router.get("/todo/:taskId", async (req, res) => {
+    try {
+        const { taskId } = req.params;
+
+        // Recherche de la tâche par son ID
+        const task = await Task.findById(taskId);
+
+        // Si la tâche n'existe pas, retourner une réponse vide
+        if (!task) {
+            return res.json({ result: true, todos: [] });
+        }
+
+        // Si la tâche est trouvée, retourner le tableau des ToDos
+        res.json({ result: true, todos: task.insideToDos });
+    } catch (err) {
         res.json({ result: false, error: err.message });
     }
 });
@@ -310,7 +351,7 @@ router.put("/updatetodo/:taskId/:todoId", async (req, res) => {
     }
 });
 
-router.post("/completetodo/:taskId/:todoId", async (req, res) => {
+router.post("/todo/:taskId/:todoId", async (req, res) => {
     try {
         const { userId } = req.body;
         const { taskId, todoId } = req.params;
@@ -405,6 +446,27 @@ router.delete("/deletetodo/:taskId/:todoId", async (req, res) => {
             message: "Todo supprimée avec succès",
             task: result,
         });
+    } catch (err) {
+        console.error(err);
+        res.json({ result: false, error: err.message });
+    }
+});
+
+router.delete("/delete/:_id", async (req, res) => {
+    try {
+        const { _id } = req.params;
+        const { _id: userId } = req.body;
+
+        const task = await Task.findOneAndDelete({ _id, creator: userId });
+
+        if (!task) {
+            return res.status(404).json({
+                result: false,
+                error: "Tâche non trouvée",
+            });
+        }
+
+        res.json({ result: true, message: "Tâche supprimée avec succès" });
     } catch (err) {
         console.error(err);
         res.json({ result: false, error: err.message });
