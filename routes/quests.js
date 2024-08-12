@@ -168,6 +168,19 @@ router.post('/room/:roomId/joinRoom', async (req, res) => {
 
 })
 
+//Récupérer tous les messages d'une room
+router.get('/room/:roomId/getMessages', async (req, res) => {
+    try {
+
+        const roomData = await Room.findById(req.params.roomId)
+
+        res.json({ result: true, data: roomData.messages })
+
+    } catch (error) {
+        res.json({ result: false, data: error })
+    }
+})
+
 //Ajout d'un message à la room
 router.post('/room/:roomId/addMessage', async (req, res) => {
 
