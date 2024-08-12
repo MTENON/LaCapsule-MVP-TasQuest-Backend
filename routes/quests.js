@@ -110,7 +110,9 @@ router.get('/joinQuest', async (req, res) => {
         characterData.map((data) => {
             questList.push({ creator: data.name, questId: data.quest })
         })
+
         res.json({ result: true, data: questList })
+
     } catch (error) {
         res.json({ result: false, data: error })
     }
@@ -169,6 +171,30 @@ router.post('/room/:roomId/joinRoom', async (req, res) => {
 //Ajout d'un message à la room
 router.post('/room/:roomId/addMessage', async (req, res) => {
 
+    try {
+        if (!checkBody(req.body, ['user', 'content'])) {
+            res.json({ result: false, data: 'Checkbody returned false' })
+        }
+
+        const updatedRoom = await Room.updateOne(
+            { _id: req.params.roomId },
+            {
+                $push: {
+                    messages: {
+                        user: req.body.user,
+                        content: req.body.content,
+                        date: new Date()
+                    }
+                }
+            }
+        )
+
+        res.json({ result: true, data: updatedRoom })
+
+    } catch (error) {
+        res.json({ result: false, data: error })
+    }
+
 })
 
 //Un utilisateur quitte la quête
@@ -187,7 +213,7 @@ router.put('/room/:roomId/leaveRoom', async (req, res) => {
             res.json({ result: false, data: 'Room does not exist' });
         }
 
-        const updateRoomData = await Room.updateOne(
+        await Room.updateOne(
             { _id: req.params.roomId }, //on trouve la room avec son Id
             { $pull: { users: userData._id } } //On retire le user de la room
         )
