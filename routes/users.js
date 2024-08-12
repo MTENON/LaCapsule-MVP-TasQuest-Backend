@@ -284,4 +284,16 @@ router.delete('/logout', async (req, res) => {
 })
 
 
+//Route delete à des fins de dev => A SUPPRIMER A LA FIN DU DEV
+router.delete('/admin/:characterId/deleteQuest', async (req, res) => {
+  try {
+    Character.updateOne({ user: req.params.characterId }, { quest: null })
+
+    res.json({ result: true, data: userData });
+  } catch (error) {
+    alert(error.message);
+  }
+})
+
+
 module.exports = router;
