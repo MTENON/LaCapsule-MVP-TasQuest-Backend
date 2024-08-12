@@ -9,6 +9,7 @@ const messageSchema = mongoose.Schema({
 const roomSchema = mongoose.Schema({
     messages: [messageSchema],
     creator: { type: mongoose.Schema.Types.ObjectId, ref: "users" },
+    users: [{ type: mongoose.Schema.Types.ObjectId, ref: "users" }],
     quest: { type: mongoose.Schema.Types.ObjectId, ref: "quests" }
 });
 
