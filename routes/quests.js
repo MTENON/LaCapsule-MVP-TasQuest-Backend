@@ -156,6 +156,11 @@ router.post('/addRoom', async (req, res) => {
     }
 })
 
+//route get pour récupérer les rooms
+router.get('/room', async (req, res) => {
+
+})
+
 //Rejoindre la room d'un autre utilisateur
 router.post('/room/:roomId/joinRoom', async (req, res) => {
 
@@ -166,13 +171,36 @@ router.post('/room/:roomId/addMessage', async (req, res) => {
 
 })
 
-//Detruire la Room
-router.delete('/room/:roomId/destroyRoom', async (req, res) => {
+//Un utilisateur quitte la quête
+router.put('/room/:roomId/leaveRoom', async (req, res) => {
+
     try {
 
-        const deletedRoom = await Room.deleteOne({ _id: req.params.roomId });
+        if (!checkBody(req.body, ['token'])) {
+            res.json({ result: false, data: 'no data found' });
+            return;
+        }
 
-        res.json({ result: true, data: deletedRoom })
+        const userData = await User.findOne({ token: req.body.token });
+
+        if (!userData) {
+            res.json({ result: false, data: 'Room does not exist' });
+        }
+
+        const updateRoomData = await Room.updateOne(
+            { _id: req.params.roomId }, //on trouve la room avec son Id
+            { $pull: { users: userData._id } } //On retire le user de la room
+        )
+
+        const roomData = await Room.findOne({ _id: req.params.roomId }); //On récupère la room
+
+        if (roomData.users.length === 0) {
+            const deletedRoom = await Room.deleteOne({ _id: req.params.roomId });
+
+            res.json({ result: true, deletedRoom, data: 'Room has been deleted' })
+        }
+
+        res.json({ result: true, data: `${userData.username} just leaved the Room` });
 
     } catch (error) {
         res.json({ result: false, data: error })
