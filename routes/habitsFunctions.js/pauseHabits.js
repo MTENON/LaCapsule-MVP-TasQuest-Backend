@@ -1,3 +1,6 @@
+// router.post("/pause", (req, res) => {}
+// checkBody(req.body, ["taskId"])
+var moment = require("moment");
 const Task = require("../../models/tasks");
 
 async function pauseHabits(obj, res) {
@@ -28,7 +31,7 @@ async function pauseHabits(obj, res) {
       message: "Cette habitude n'existe pas.",
     });
     return;
-  } else if (data.onPauseSince) {
+  } else if (habit.onPauseSince) {
     res.json({
       result: false,
       message: "Cette habitude est déjà en pause.",

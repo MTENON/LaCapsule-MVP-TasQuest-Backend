@@ -1,3 +1,6 @@
+// router.post("/unpause", (req, res) => {}
+// checkBody(req.body, ["taskId"])
+
 var moment = require("moment");
 const Task = require("../../models/tasks");
 
@@ -10,18 +13,25 @@ async function unpauseHabits(obj, res) {
     _id: taskId,
   };
 
-const now = moment.utc().toDate();
+  const now = moment.utc().toDate();
+
+  const habit = await Task.findOne(filter)
+    .select(
+      "updatedAt startDate repetition.number repetition.label onPauseSince PauseEndDate pauseDesc"
+    )
+    .lean();
+
+  const number = habit.repetition.number;
+  const label = habit.repetition.label;
 
   const newData = {
     updatedAt: now,
+    startDate: now,
+    endDate: moment(now).utc().add(number, label),
     onPauseSince: null,
     PauseEndDate: null,
     pauseDesc: null,
   };
-
-  const habit = await Task.findOne(filter)
-    .select("updatedAt onPauseSince PauseEndDate pauseDesc")
-    .lean();
 
   if (!habit) {
     res.json({
@@ -29,7 +39,7 @@ const now = moment.utc().toDate();
       message: "Cette habitude n'existe pas.",
     });
     return;
-  } else if (data.onPauseSince === null) {
+  } else if (habit.onPauseSince === null) {
     res.json({
       result: false,
       message: "Cette habitude n'est pas en pause",
