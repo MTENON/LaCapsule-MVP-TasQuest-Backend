@@ -258,6 +258,7 @@ router.post('/signin', async (req, res) => {
     characterId: characterData._id,
     characterName: characterData.name,
     money: characterData.money,
+    level: characterData.caracteristics.level,
     HP: characterData.caracteristics.HP,
     XP: characterData.caracteristics.XP,
     caracs: characterData.caracteristics.caracs,
