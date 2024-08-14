@@ -23,7 +23,7 @@ async function doneHabits(obj, res) {
 
   await Task.updateOne(
     { creator: _id, _id: taskId },
-    { isDone: !habit.isDone, updatedAt: now, }
+    { isDone: !habit.isDone, updatedAt: now }
   );
 
   const character = await Character.findOne({ user: _id });
@@ -35,6 +35,14 @@ async function doneHabits(obj, res) {
     });
     return;
   }
+
+  const newMoney = newIsDone
+    ? character.money + pointsAndCoins
+    : character.money - pointsAndCoins;
+
+  const newXP = newIsDone
+    ? character.caracteristics.XP + pointsAndCoins
+    : character.caracteristics.XP - pointsAndCoins;
 
   const characterUpdate = {
     $inc: {
@@ -49,6 +57,8 @@ async function doneHabits(obj, res) {
     result: true,
     isDone: habit.isDone,
     message: "habitude mise a jour",
+    money: newMoney,
+    XP: newXP,
   });
 }
 
