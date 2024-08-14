@@ -12,7 +12,7 @@ async function createHabits(obj, res) {
     label,
     isFavorite,
     _id,
-    // startDate,
+    startDate,
   } = obj;
 
   if (
@@ -41,7 +41,7 @@ async function createHabits(obj, res) {
     return;
   }
 
-  const startDate = moment().utc();
+  const now = new Date(); 
   const endDate = moment(startDate).utc().add(number, label);
   console.log(endDate);
 
@@ -50,6 +50,7 @@ async function createHabits(obj, res) {
     type: "Habits",
     name,
     description,
+    createdAt: moment(now).utc(),
     startDate,
     endDate,
     tags,

@@ -1,3 +1,6 @@
+// router.post("/pause", (req, res) => {}
+// checkBody(req.body, ["taskId"])
+var moment = require("moment");
 const Task = require("../../models/tasks");
 
 async function pauseHabits(obj, res) {
@@ -9,9 +12,11 @@ async function pauseHabits(obj, res) {
     _id: taskId,
   };
 
+  const now = moment.utc().toDate();
+
   const newData = {
-    updatedAt: new Date(),
-    onPauseSince: new Date(),
+    updatedAt: now,
+    onPauseSince: now,
     PauseEndDate,
     pauseDesc,
   };
@@ -26,7 +31,7 @@ async function pauseHabits(obj, res) {
       message: "Cette habitude n'existe pas.",
     });
     return;
-  } else if (data.onPauseSince) {
+  } else if (habit.onPauseSince) {
     res.json({
       result: false,
       message: "Cette habitude est déjà en pause.",
@@ -34,7 +39,7 @@ async function pauseHabits(obj, res) {
     return;
   }
 
-  await Task.updateOne({ _id: data._id }, { newData });
+  await Task.findByIdAndUpdate(habit._id.toString(), newData);
 
   res.json({ result: true, message: "Habitude mise en pause." });
 }

@@ -44,7 +44,7 @@ router.get("/unvalid", async (req, res) => {
 
 //  Route POST pour la creation d'une habitude
 router.post("/create", (req, res) => {
-  if (!checkBody(req.body, ["name", "number", "label"])) {
+  if (!checkBody(req.body, ["name", "number", "label", "startDate"])) {
     res.json({ result: false, message: "Champs manquants pour la creation" });
     return;
   }
@@ -58,7 +58,7 @@ router.post("/create", (req, res) => {
 
 //  Route POST pour la mise en pause d'une habitude
 router.post("/pause", (req, res) => {
-  if (!checkBody(req.body, ["name", "taskId", "token"])) {
+  if (!checkBody(req.body, ["taskId"])) {
     res.json({ result: false, message: "Champs manquants" });
     return;
   }
@@ -72,7 +72,7 @@ router.post("/pause", (req, res) => {
 
 //  Route POST pour retirer la pause d'une habitude
 router.post("/unpause", (req, res) => {
-  if (!checkBody(req.body, ["name", "taskId", "token"])) {
+  if (!checkBody(req.body, ["taskId"])) {
     res.json({ result: false, message: "Champs manquants" });
     return;
   }
@@ -93,7 +93,7 @@ router.get("/unpauseauto", async (req, res) => {
 });
 
 //  Route POST pour la modification d'une habitude
-router.post("/modify", (req, res) => {
+router.post("/modify", async (req, res) => {
   if (!checkBody(req.body, ["name", "taskId", "number", "label"])) {
     res.json({ result: false, message: "Champs manquants" });
     return;
