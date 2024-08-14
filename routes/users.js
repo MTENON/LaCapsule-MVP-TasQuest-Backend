@@ -221,6 +221,7 @@ router.post('/signin', async (req, res) => {
     return;
   } else if (data && !bcrypt.compareSync(req.body.password, data.password)) {
     res.json({ result: false, error: 'wrong password' })
+    return;
   } else if (data && bcrypt.compareSync(req.body.password, data.password)) {
 
     await User.updateOne({

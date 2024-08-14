@@ -14,6 +14,7 @@ var classesRouter = require("./routes/classes");
 var tasksRouter = require("./routes/tasks");
 var questsRouter = require("./routes/quests")
 var itemRouter = require("./routes/items");
+var parametersRouter = require("./routes/parameters");
 
 var app = express();
 
@@ -50,6 +51,7 @@ app.use("/habits", validateToken);
 app.use("/tasks", validateToken);
 app.use("/quests", validateToken);
 app.use("/items", validateToken);
+app.use("/parameters", validateToken);
 
 app.use("/", indexRouter);
 app.use("/users", usersRouter);
@@ -58,5 +60,6 @@ app.use("/tasks", tasksRouter);
 app.use("/classes", classesRouter);
 app.use("/quests", questsRouter);
 app.use("/items", itemRouter);
+app.use("/parameters", parametersRouter);
 
 module.exports = app;
