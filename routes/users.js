@@ -183,7 +183,9 @@ router.post('/signup', async (req, res) => {
     username: newUserData.username,
     token: newUserData.token,
     characterId: newCharacterData._id,
+    characterName: newCharacterData.name,
     money: newCharacterData.money,
+    level: newCharacterData.caracteristics.level,
     HP: newCharacterData.caracteristics.HP,
     XP: newCharacterData.caracteristics.XP,
     caracs: {
