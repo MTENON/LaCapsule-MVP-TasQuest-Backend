@@ -183,7 +183,9 @@ router.post('/signup', async (req, res) => {
     username: newUserData.username,
     token: newUserData.token,
     characterId: newCharacterData._id,
+    characterName: newCharacterData.name,
     money: newCharacterData.money,
+    level: newCharacterData.caracteristics.level,
     HP: newCharacterData.caracteristics.HP,
     XP: newCharacterData.caracteristics.XP,
     caracs: {
@@ -221,6 +223,7 @@ router.post('/signin', async (req, res) => {
     return;
   } else if (data && !bcrypt.compareSync(req.body.password, data.password)) {
     res.json({ result: false, error: 'wrong password' })
+    return;
   } else if (data && bcrypt.compareSync(req.body.password, data.password)) {
 
     await User.updateOne({
@@ -258,6 +261,7 @@ router.post('/signin', async (req, res) => {
     characterId: characterData._id,
     characterName: characterData.name,
     money: characterData.money,
+    level: characterData.caracteristics.level,
     HP: characterData.caracteristics.HP,
     XP: characterData.caracteristics.XP,
     caracs: characterData.caracteristics.caracs,
