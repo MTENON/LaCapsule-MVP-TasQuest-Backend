@@ -21,7 +21,7 @@ router.post('/userMail', async (req, res) => {
         res.json({ result: true, data: userData.email })
 
     } catch (error) {
-        res.json({ result: false, error })
+        res.json({ result: false, error: error.message })
     }
 })
 
@@ -57,7 +57,7 @@ router.put('/username', async (req, res) => {
         }
 
     } catch (error) {
-        res.json({ result: false, error })
+        res.json({ result: false, error: error.message })
         return;
     }
 })
@@ -88,7 +88,7 @@ router.put('/password', async (req, res) => {
         }
 
     } catch (error) {
-        res.json({ result: false, error })
+        res.json({ result: false, error: error.message })
     }
 })
 
@@ -118,7 +118,7 @@ router.put('/email', async (req, res) => {
         }
 
     } catch (error) {
-        res.json({ result: false, error })
+        res.json({ result: false, error: error.message })
     }
 })
 
@@ -149,7 +149,38 @@ router.put('/characterName', async (req, res) => {
         }
 
     } catch (error) {
-        res.json({ result: false, error })
+        res.json({ result: false, error: error.message })
+    }
+})
+
+router.delete('/eraseAccount', async (req, res) => {
+    try {
+        if (!checkBody(req.body, ["token", "password", "confirmPassword"])) {
+            res.json({ result: false, data: "checkbody returned false" })
+            return;
+        }
+
+        const userData = await User.findOne({ token: req.body.token });
+
+        if (req.body.password !== req.body.confirmPassword || !userData) {
+            res.json({ result: false, data: "No user found" })
+            return;
+        }
+
+        if (!bcrypt.compareSync(req.body.password, userData.password)) {
+            res.json({ result: false, data: "Mot de passe erronée." })
+            return;
+        }
+
+        await Character.deleteOne({ user: userData._id })
+        await User.deleteOne({ token: req.body.token })
+
+        res.json({ result: true, data: "Votre compte à été supprimé." })
+        return;
+
+    } catch (error) {
+        res.json({ result: false, error: error.message })
+        return;
     }
 })
 
