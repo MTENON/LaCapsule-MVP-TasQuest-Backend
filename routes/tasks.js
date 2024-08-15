@@ -9,10 +9,11 @@ const { checkBody } = require("../functions/checkbody");
 
 //Route créer une nouvelle tache
 router.post("/new", (req, res) => {
+    // Validation de la présence des champs requis
     if (!checkBody(req.body, ["name", "difficulty", "token"])) {
-        res.json({ result: false, message: "Un champ est manquant" });
-        return;
+        return res.json({ result: false, message: "Un champ est manquant" });
     }
+
     const {
         name,
         description,
@@ -26,48 +27,31 @@ router.post("/new", (req, res) => {
 
     console.log("Creating task for user:", _id);
 
-    Task.findOne({
+    // Création de la nouvelle tâche
+    const newTask = new Task({
+        type: "Task",
         creator: _id,
-        name: { $regex: new RegExp(name, "i") },
-    })
-        .then((data) => {
-            if (!data) {
-                const newTask = new Task({
-                    type: "Task",
-                    creator: _id,
-                    name,
-                    difficulty,
-                    startDate: new Date(),
-                    endDate,
-                    isUrgent,
-                    description,
-                    tags,
-                });
+        name,
+        difficulty: 1,
+        startDate: startDate ? new Date(startDate) : new Date(),
+        endDate: endDate ? new Date(endDate) : null,
+        isUrgent: isUrgent || false,
+        description: description || "",
+        tags: tags || [],
+    });
 
-                newTask
-                    .save()
-                    .then((newDoc) => {
-                        console.log("Task created:", newDoc);
-                        res.json({ result: true, task: newDoc });
-                    })
-                    .catch((error) => {
-                        console.error("Save error:", error.message);
-                        res.json({
-                            result: false,
-                            message: "Erreur lors de la sauvegarde",
-                            error: error.message,
-                        });
-                    });
-            } else {
-                console.log("Task already exists");
-                res.json({ result: false, message: "La tâche existe" });
-            }
+    // Sauvegarde de la nouvelle tâche dans la base de données
+    newTask
+        .save()
+        .then((newDoc) => {
+            console.log("Task created:", newDoc);
+            res.json({ result: true, task: newDoc });
         })
         .catch((error) => {
-            console.error("Find error:", error.message);
+            console.error("Save error:", error.message);
             res.status(500).json({
                 result: false,
-                message: "Erreur serveur",
+                message: "Erreur lors de la sauvegarde",
                 error: error.message,
             });
         });
@@ -82,6 +66,8 @@ router.get("/", (req, res) => {
             if (data.length < 1) {
                 res.json({ result: true, message: "Aucune tache est créé" });
             } else {
+                console.log(data);
+
                 res.json({ result: true, data });
             }
         })
