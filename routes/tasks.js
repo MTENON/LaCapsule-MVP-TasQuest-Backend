@@ -13,8 +13,16 @@ router.post("/new", (req, res) => {
         res.json({ result: false, message: "Un champ est manquant" });
         return;
     }
-    const { name, description, tags, difficulty, endDate, isUrgent, _id } =
-        req.body;
+    const {
+        name,
+        description,
+        tags,
+        startDate,
+        difficulty,
+        endDate,
+        isUrgent,
+        _id,
+    } = req.body;
 
     console.log("Creating task for user:", _id);
 
@@ -29,6 +37,7 @@ router.post("/new", (req, res) => {
                     creator: _id,
                     name,
                     difficulty,
+                    startDate: new Date(),
                     endDate,
                     isUrgent,
                     description,
@@ -128,7 +137,9 @@ router.put("/isdone/:_id", async (req, res) => {
         const newIsDone = !task.isDone;
 
         // Construire l'objet de mise à jour pour la tâche
-        const updateTask = { $set: { isDone: newIsDone } };
+        const updateTask = {
+            $set: { isDone: newIsDone, updatedAt: new Date() },
+        };
 
         // Points et pièces selon la difficulté
         //en test 1 point par difficulté en HP et en argent
@@ -144,6 +155,7 @@ router.put("/isdone/:_id", async (req, res) => {
             res.status.json({
                 result: false,
                 error: "Personnage non trouvé",
+                point: pointsAndCoins,
             });
             return;
         }
@@ -175,6 +187,7 @@ router.post("/update/:_id", async (req, res) => {
             difficulty,
             tags,
             isUrgent,
+            startDate,
             description,
             endDate,
         } = req.body;
@@ -200,6 +213,7 @@ router.post("/update/:_id", async (req, res) => {
             name,
             difficulty,
             tags,
+            startDate,
             isUrgent,
             description,
             updatedAt: new Date(),
@@ -303,117 +317,64 @@ router.get("/todo/:taskId", async (req, res) => {
     }
 });
 
-// Mettre à jour une Todo
-router.put("/updatetodo/:taskId/:todoId", async (req, res) => {
-    try {
-        const { userId, toDo } = req.body;
-        const { taskId, todoId } = req.params;
-
-        // Vérifiez si l'utilisateur a les droits sur la tâche
-        const task = await Task.findOne({
-            creator: userId,
-            _id: taskId,
-        });
-
-        if (!task) {
-            return res.json({
-                result: false,
-                error: "Tâche non trouvée",
-            });
-        }
-
-        // Mettez à jour la Todo spécifique à l'intérieur de la tâche principale
-        const result = await Task.findOneAndUpdate(
-            { _id: taskId, creator: userId, "insideToDos._id": todoId },
-            {
-                $set: {
-                    "insideToDos.$.toDo": toDo,
-                },
-            },
-            { new: true }
-        );
-
-        if (!result) {
-            return res.json({
-                result: false,
-                error: "Todo non trouvée ou non modifiée",
-            });
-        }
-
-        res.json({
-            result: true,
-            message: "Todo mise à jour avec succès",
-            task: result,
-        });
-    } catch (err) {
-        console.error(err);
-        res.json({ result: false, error: err.message });
-    }
-});
-
 router.post("/todo/:taskId/:todoId", async (req, res) => {
     try {
-        const { userId } = req.body;
         const { taskId, todoId } = req.params;
+        const userId = req.body._id;
 
+        // Trouver la tâche et le sous-document spécifique
         const task = await Task.findOne({
-            creator: userId,
             _id: taskId,
+            creator: userId,
+            "insideToDos._id": todoId,
         });
 
         if (!task) {
-            return res.json({
+            return res.status(404).json({
                 result: false,
-                error: "Tâche non trouvée",
+                error: "Tâche ou Todo non trouvé",
             });
         }
 
-        // Trouver la Todo
+        // Trouver le sous-document à mettre à jour
         const todo = task.insideToDos.id(todoId);
-
         if (!todo) {
-            return res.json({
+            return res.status(404).json({
                 result: false,
-                error: "Todo non trouvée",
+                error: "Todo non trouvé",
             });
         }
 
-        // Inverser la valeur de todoIsCompleted
-        const newTodoIsCompleted = !todo.todoIsCompleted;
+        // Inverser la valeur de `todoIsCompleted`
+        todo.todoIsCompleted = !todo.todoIsCompleted;
 
-        // MAJ de la todo
-        const result = await Task.findOneAndUpdate(
-            { _id: taskId, creator: userId, "insideToDos._id": todoId },
-            {
-                $set: {
-                    "insideToDos.$.todoIsCompleted": newTodoIsCompleted,
-                },
-            },
-            { new: true }
-        );
-
-        if (!result) {
-            return res.json({
-                result: false,
-                error: "Todo non trouvée ou non modifiée",
-            });
-        }
+        // Sauvegarder la tâche avec le sous-document mis à jour
+        await task.save();
 
         res.json({
             result: true,
-            message: "Todo mise à jour avec succès",
-            task: result,
+            message: "Todo mis à jour avec succès",
+            task: task,
         });
     } catch (err) {
-        res.json({ result: false, error: err.message });
+        console.error("Erreur lors de la mise à jour du Todo:", err);
+        res.status(500).json({
+            result: false,
+            error: "Erreur serveur interne",
+        });
     }
 });
 
 // Supprimer une Todo
 router.delete("/deletetodo/:taskId/:todoId", async (req, res) => {
     try {
-        const { userId } = req.body;
+        // Correction ici : on extrait directement `_id` de `req.body` et le renomme en `userId`
+        const userId = req.body._id;
         const { taskId, todoId } = req.params;
+
+        console.log("Received userId:", userId);
+        console.log("Received taskId:", taskId);
+        console.log("Received todoId:", todoId);
 
         const task = await Task.findOne({
             creator: userId,
@@ -421,33 +382,42 @@ router.delete("/deletetodo/:taskId/:todoId", async (req, res) => {
         });
 
         if (!task) {
+            console.error(
+                "Tâche non trouvée pour userId:",
+                userId,
+                "et taskId:",
+                taskId
+            );
             return res.json({
                 result: false,
                 error: "Tâche non trouvée",
             });
         }
 
-        // Utilisez findOneAndUpdate avec $pull pour supprimer la Todo spécifique
-        const result = await Task.findOneAndUpdate(
+        const result = await Task.updateOne(
             { _id: taskId, creator: userId },
-            { $pull: { insideToDos: { _id: todoId } } },
-            { new: true }
+            { $pull: { insideToDos: { _id: todoId } } }
         );
 
-        if (!result) {
+        if (result.nModified === 0) {
+            console.error(
+                "Todo non trouvée ou non supprimée pour todoId:",
+                todoId
+            );
             return res.json({
                 result: false,
                 error: "Todo non trouvée ou non supprimée",
             });
         }
 
+        console.log("Todo successfully deleted:", todoId);
+
         res.json({
             result: true,
             message: "Todo supprimée avec succès",
-            task: result,
         });
     } catch (err) {
-        console.error(err);
+        console.error("Erreur lors de la suppression de la todo:", err.message);
         res.json({ result: false, error: err.message });
     }
 });
