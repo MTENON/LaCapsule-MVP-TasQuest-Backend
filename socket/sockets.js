@@ -14,14 +14,22 @@ const sockets = async (io, socket) => {
     socket.on('leave room', (room) => {
         socket.leave(room);
         console.log(room, 'leaved');
-    })
+    });
 
     socket.on('room message', (data) => {
 
         console.log('User', data.user, 'sent', data.content, 'in room:', data.room);
 
         io.to(data.room).emit('message', { user: data.user, content: data.content });
+    });
+
+    socket.on('writing', (data) => {
+        console.log('User', data.user, 'is writing.')
+
+        io.to(data.room).emit('writing', { user: data.user })
     })
+
+    // --- END ROOMS --- //
 };
 
 module.exports = sockets;
