@@ -158,9 +158,17 @@ router.post('/addRoom', async (req, res) => {
     }
 })
 
-//route get pour récupérer les rooms
-router.get('/room', async (req, res) => {
+//route get pour récupérer les rooms et les afficher toutes dans le menu multijoueur
+router.get('/rooms', async (req, res) => {
+    try {
 
+        const roomData = await Room.find().populate('quest');
+
+        res.json({ result: true, data: roomData })
+
+    } catch (error) {
+        res.json({ result: false, data: error.message })
+    }
 })
 
 //Rejoindre la room d'un autre utilisateur
