@@ -88,7 +88,7 @@ router.delete('/stopQuest', async (req, res) => {
             res.json({ result: false, data: 'Checkbody returned false' })
             return;
         }
-        const characterUpdate = await Character.updateOne(
+        await Character.updateOne(
             { _id: req.body.characterId },
             { quest: null }
         )
@@ -100,23 +100,24 @@ router.delete('/stopQuest', async (req, res) => {
     }
 });
 
-router.get('/joinQuest', async (req, res) => {
-    try {
-        const characterData = await Character.find({
-            quest: { $ne: null }
-        })
+//Route pour trouver les quêtes lancées par les joueurs. INUTILE ON VA LES CHERCHER AVEC LES ROOMS
+// router.get('/joinQuest', async (req, res) => {
+//     try {
+//         const characterData = await Character.find({
+//             quest: { $ne: null }
+//         })
 
-        const questList = []
-        characterData.map((data) => {
-            questList.push({ creator: data.name, questId: data.quest })
-        })
+//         const questList = []
+//         characterData.map((data) => {
+//             questList.push({ creator: data.name, questId: data.quest })
+//         })
 
-        res.json({ result: true, data: questList })
+//         res.json({ result: true, data: questList })
 
-    } catch (error) {
-        res.json({ result: false, data: error })
-    }
-});
+//     } catch (error) {
+//         res.json({ result: false, data: error })
+//     }
+// });
 
 //Creation d'une nouvelle room pour récupérer les informations des utilisateurs
 router.post('/addRoom', async (req, res) => {
@@ -162,9 +163,25 @@ router.post('/addRoom', async (req, res) => {
 router.get('/rooms', async (req, res) => {
     try {
 
-        const roomData = await Room.find().populate('quest');
+        const roomData = await Room.find().populate('quest').populate('creator');
 
-        res.json({ result: true, data: roomData })
+        const resultData = []
+
+        roomData.map((e) => {
+            resultData.push(
+                {
+                    roomId: e._id,
+                    id: e.quest._id,
+                    name: e.quest.name,
+                    money: e.quest.money,
+                    XP: e.quest.XP,
+                    difficulty: e.quest.difficulty,
+                    creator: e.creator.username
+                }
+            )
+        })
+
+        res.json({ result: true, data: resultData })
 
     } catch (error) {
         res.json({ result: false, data: error.message })
