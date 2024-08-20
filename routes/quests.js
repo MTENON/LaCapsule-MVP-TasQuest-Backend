@@ -135,12 +135,12 @@ router.post('/addRoom', async (req, res) => {
             return;
         }
 
-        const isRoomExist = await Room.findOne({ creator: '66b8f26e760847d3b598061a' });
+        const isRoomExist = await Room.findOne({ creator: userData._id });
 
-        // if (isRoomExist) {
-        //     res.json({ result: false, data: 'user already have quest' });
-        //     return;
-        // };
+        if (isRoomExist) {
+            res.json({ result: false, data: 'user already have quest', intel: isRoomExist });
+            return;
+        };
 
         const newRoom = await new Room({
             messages: [],
