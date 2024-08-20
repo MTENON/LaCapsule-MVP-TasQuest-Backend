@@ -171,7 +171,7 @@ router.get('/rooms', async (req, res) => {
             resultData.push(
                 {
                     roomId: e._id,
-                    id: e.quest._id,
+                    _id: e.quest._id,
                     name: e.quest.name,
                     money: e.quest.money,
                     XP: e.quest.XP,
