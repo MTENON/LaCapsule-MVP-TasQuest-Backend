@@ -29,9 +29,9 @@ router.get('/threeQuests', async (req, res) => {
             const questTwo = await questData.filter((e) => e.difficulty === 2);
             const questThree = await questData.filter((e) => e.difficulty === 3);
 
-            const questLevelOne = await questOne[randomNumber(0, questOne.length)]
-            const questLevelTwo = await questTwo[randomNumber(0, questTwo.length)]
-            const questLevelThree = await questThree[randomNumber(0, questThree.length)]
+            const questLevelOne = await questOne[randomNumber(0, questOne.length - 1)]
+            const questLevelTwo = await questTwo[randomNumber(0, questTwo.length - 1)]
+            const questLevelThree = await questThree[randomNumber(0, questThree.length - 1)]
 
             res.json({ result: true, questOne: questLevelOne, questTwo: questLevelTwo, questThree: questLevelThree });
         } else {
